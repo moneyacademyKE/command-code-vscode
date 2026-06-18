@@ -58,9 +58,8 @@ function initUI() {
     if (input.value.trim()) {
       const prompt = input.value;
       vscode.postMessage({
-        jsonrpc: '2.0',
-        method: 'chatInput',
-        params: { prompt }
+        type: 'chatInput',
+        payload: { prompt }
       });
       // Optimistically update the UI so the execute button feels responsive
       appendMessage({ id: 'local-' + Date.now(), role: 'user', content: prompt });
