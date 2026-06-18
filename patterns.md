@@ -37,3 +37,11 @@
 - When using UDS (Unix Domain Sockets) or shared IPC mechanisms to connect an Editor UI to external CLI agents, avoid blindly broadcasting UI events to all connected process sockets.
 - Implement an explicit "Lock Stealing" handshake where a new interactive CLI session claims ownership of the UI context via a `CLAIM_UI_LOCK` payload.
 - This ensures only one process identity communicates with the UI at a time, protecting background/parallel agents from accidentally receiving UI interactions and breaking multi-agent parallelism safely.
+
+### Targeted DOM Mutations for "Thin Glass" Webviews
+- **Context**: When rendering webviews inside VS Code using Vanilla JS, updating the entire DOM via `innerHTML` on every state tick destroys user inputs (like textareas).
+- **Solution**: Decouple the structural identity of the UI from temporal state updates. Use targeted `document.getElementById` to modify specific elements (`updateTokens`, `appendMessage`). Never replace the entire DOM tree if it contains user-editable inputs.
+
+### Implicit Lock Inference
+- **Context**: Enforcing strict IPC handshakes (e.g., `CLAIM_UI_LOCK`) can break older client binaries that don't know the new protocol.
+- **Solution**: If a client actively dispatches a highly specific event (like `DISPATCH_WEBVIEW_EVENT`), logically it *must* be the interactive session. Implicitly grant the lock to that client to ensure backwards compatibility while maintaining strict 1:1 affinity.

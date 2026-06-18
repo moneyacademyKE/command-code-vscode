@@ -15,8 +15,7 @@ let state = {
   modelId: ''
 };
 
-// Render the application based on state
-function render() {
+function initUI() {
   const app = document.getElementById('app');
   if (!app) return;
 
@@ -29,11 +28,11 @@ function render() {
     <div class="header">
       <h2>Command Code Chat</h2>
       <div class="metrics">
-        <span>TOKENS // ${state.tokens.total.toLocaleString()}</span>
-        <span>MODEL // ${state.modelId || 'None'}</span>
+        <span id="token-count">TOKENS // ${state.tokens.total.toLocaleString()}</span>
+        <span id="model-name">MODEL // ${state.modelId || 'None'}</span>
       </div>
     </div>
-    <div class="chat-history">
+    <div class="chat-history" id="chat-history">
       ${state.messages.map(m => `
         <div class="message message-${m.role}">
           <span class="message-role">${m.role}</span>
@@ -73,6 +72,33 @@ function render() {
   });
 }
 
+function appendMessage(m: { id: string, role: string, content: string }) {
+  const history = document.getElementById('chat-history');
+  if (!history) return;
+  const div = document.createElement('div');
+  div.className = `message message-${m.role}`;
+  div.innerHTML = `
+    <span class="message-role">${m.role}</span>
+    <span>${m.content}</span>
+  `;
+  history.appendChild(div);
+  history.scrollTop = history.scrollHeight;
+}
+
+function updateTokens() {
+  const tokenCount = document.getElementById('token-count');
+  if (tokenCount) {
+    tokenCount.innerText = `TOKENS // ${state.tokens.total.toLocaleString()}`;
+  }
+}
+
+function updateModel() {
+  const modelName = document.getElementById('model-name');
+  if (modelName) {
+    modelName.innerText = `MODEL // ${state.modelId || 'None'}`;
+  }
+}
+
 // Listen for JSON-RPC payloads from the extension
 window.addEventListener('message', event => {
   const message = event.data;
@@ -83,19 +109,19 @@ window.addEventListener('message', event => {
     switch (type) {
       case 'RenderMessage':
         state.messages.push(payload);
-        render();
+        appendMessage(payload);
         break;
       case 'UpdateTokens':
         state.tokens = payload;
-        render();
+        updateTokens();
         break;
       case 'ModelChanged':
         state.modelId = payload.modelId;
-        render();
+        updateModel();
         break;
     }
   }
 });
 
 // Initial render
-render();
+initUI();

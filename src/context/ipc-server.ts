@@ -324,6 +324,10 @@ export class IPCServer implements vscode.Disposable {
       }
 
       if (action === IPC_ACTIONS.DISPATCH_WEBVIEW_EVENT) {
+        if (!this.uiLockOwner) {
+          this.uiLockOwner = socket;
+          this.log("UI lock implicitly claimed by webview event dispatch.");
+        }
         if (this.webviewDispatcher) {
           this.webviewDispatcher(request.payload.eventPayload);
         }

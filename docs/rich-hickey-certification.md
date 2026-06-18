@@ -4,16 +4,16 @@
 This document certifies that the new **Grunge Brutalist Webview UI** and its **1:1 IPC Session Affinity** integration for the `cmd-lite` VS Code extension meet the rigorous standards of Rich Hickey's "Simple Made Easy" philosophy. 
 
 ### 1. Identity and State (Pass)
-- **Problem Avoided**: Duplicating conversation history, model selections, and token counts inside the Webview's JavaScript memory.
-- **Solution Certified**: The Webview is completely stateless ("Thin Glass"). It acts merely as a dumb renderer that reacts to JSON-RPC events (e.g., `RenderMessage`, `UpdateTokens`) dispatched by the central `cmd` CLI. All state lives exactly where it belongs: in the CLI context server.
+- **Problem Avoided**: The Webview DOM previously conflated the update of streaming metrics (time) with the structural identity of the chat input, destroying the user's keystrokes.
+- **Solution Certified**: "Un-complected" the DOM rendering. The chat input's identity is strictly preserved by using targeted DOM mutations (`updateTokens`, `appendMessage`). The Webview remains stateless, but correctly separates structural identity from temporal updates.
 
 ### 2. Time and Concurrency (Pass)
-- **Problem Avoided**: Naive event broadcasting where parallel background tasks and headless scripts accidentally spew JSON payloads into the UI or steal user clicks.
-- **Solution Certified**: Implemented an explicit **1:1 Session Affinity (UI Lock)**. Processes must explicitly send a `CLAIM_UI_LOCK` payload upon initialization. If a new interactive session starts, it "steals" the lock, ensuring that the UI always represents exactly one discrete temporal process at a time. Background parallelism is fully preserved and isolated.
+- **Problem Avoided**: A rigid deadlock where the IPC server dropped all Webview inputs because legacy CLIs failed to explicitly send `CLAIM_UI_LOCK`.
+- **Solution Certified**: **Implicit UI Lock Inference**. If a CLI session actively dispatching `DISPATCH_WEBVIEW_EVENT` lacks the lock, the server implicitly grants it. This resolves the deadlock while preserving 1:1 Session Affinity, perfectly accommodating both old and new CLI binaries without additional ceremony.
 
 ### 3. Complexity vs Ease (Pass)
 - **Problem Avoided**: Adopting a massive frontend framework (React, Vue) to build a simple chat UI, dragging in gigabytes of `node_modules` and complecting the build step.
-- **Solution Certified**: The UI was constructed using pure Vanilla JS and DOM manipulation inside `main.ts`, coupled with raw CSS. It is "Simple" because it does not tangle the extension with a virtual DOM or complex reactive states.
+- **Solution Certified**: The UI was constructed using pure Vanilla JS and targeted DOM manipulation inside `main.ts`, coupled with raw CSS. It is "Simple" because it does not tangle the extension with a virtual DOM or complex reactive states.
 
 ### 4. Aesthetic Philosophy (Pass)
 - **Problem Avoided**: The friendly, glossy, "Corporate Tech" aesthetic which obfuscates the underlying machinery.
