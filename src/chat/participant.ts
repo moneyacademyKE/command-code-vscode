@@ -15,7 +15,7 @@ export function registerChatParticipant(context: vscode.ExtensionContext): void 
   loadPersistedState(context);
 
   const participant = vscode.chat.createChatParticipant(
-    "commandcode.chat",
+    "cmd-lite.chat",
     async (
       request: vscode.ChatRequest,
       _chatContext: vscode.ChatContext,
@@ -57,7 +57,7 @@ export function registerChatParticipant(context: vscode.ExtensionContext): void 
 
         if (hasCodeProposal(result.stdout)) {
           stream.button({
-            command: "commandcode.diff.show",
+            command: "cmd-lite.diff.show",
             title: "📊 Show Diff",
             arguments: [result.stdout],
           });
@@ -125,11 +125,11 @@ function updateState(next: ParticipantState): void {
 let currentSessionState: ParticipantState | undefined;
 
 function persistState(context: vscode.ExtensionContext): void {
-  context.globalState.update("commandcode.participantState", currentSessionState);
+  context.globalState.update("cmd-lite.participantState", currentSessionState);
 }
 
 function loadPersistedState(context: vscode.ExtensionContext): void {
-  const stored = context.globalState.get<ParticipantState>("commandcode.participantState");
+  const stored = context.globalState.get<ParticipantState>("cmd-lite.participantState");
   if (stored) {
     currentSessionState = stored;
   }

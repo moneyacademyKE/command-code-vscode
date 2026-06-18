@@ -7,7 +7,7 @@ let cached: string | undefined;
 export function resolveCliPath(): string {
   if (cached) return cached;
   const configured = vscode.workspace
-    .getConfiguration("commandcode")
+    .getConfiguration("cmd-lite")
     .get<string>("cliPath", "cmd");
   cached = configured.trim() || "cmd";
   return cached;

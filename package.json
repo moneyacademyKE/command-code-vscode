@@ -36,11 +36,10 @@
   "contributes": {
     "chatParticipants": [
       {
-        "id": "commandcode.chat",
+        "id": "cmd-lite.chat",
         "name": "cmd",
         "fullName": "Command Code",
         "description": "Your coding agent with taste. Multi-model, plan mode, and continuous learning.",
-        "isDefault": true,
         "commands": [
           {
             "name": "plan",
@@ -64,151 +63,154 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "commandcode.viewContainer",
+          "id": "cmd-lite-viewContainer",
           "title": "Command Code",
-          "icon": "$(circuit-board)"
+          "icon": "assets/circuit-board.svg"
         }
       ]
     },
     "views": {
-      "commandcode.viewContainer": [
+      "cmd-lite-viewContainer": [
         {
-          "id": "commandcode.chatView",
+          "id": "cmd-lite.chatView",
           "name": "Chat",
-          "type": "webview"
+          "type": "webview",
+          "icon": "$(comment-discussion)"
         },
         {
-          "id": "commandcode.tasteView",
-          "name": "Taste"
+          "id": "cmd-lite.tasteView",
+          "name": "Taste",
+          "icon": "$(book)"
         },
         {
-          "id": "commandcode.sessionView",
-          "name": "Sessions"
+          "id": "cmd-lite.sessionView",
+          "name": "Sessions",
+          "icon": "$(history)"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "commandcode.tasteView",
+        "view": "cmd-lite.tasteView",
         "contents": "No taste learned yet.\n[Learn from current repo](command:commandcode.taste.learnHere)\n[Pull taste package](command:commandcode.taste.pull)\n[Open taste docs](https://commandcode.ai/docs/taste)"
       }
     ],
     "commands": [
       {
-        "command": "commandcode.start",
+        "command": "cmd-lite.start",
         "title": "Start Command Code Session",
         "shortTitle": "Start Session",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.continue",
+        "command": "cmd-lite.continue",
         "title": "Continue Last Session",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.resume",
+        "command": "cmd-lite.resume",
         "title": "Resume Past Session",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.print",
+        "command": "cmd-lite.print",
         "title": "Run Query (Headless)",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.plan",
+        "command": "cmd-lite.plan",
         "title": "Plan Mode",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.review",
+        "command": "cmd-lite.review",
         "title": "Review Pull Request",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.model.pick",
+        "command": "cmd-lite.model.pick",
         "title": "Pick Model",
         "category": "Command Code",
         "shortTitle": "Switch Model"
       },
       {
-        "command": "commandcode.permission.pick",
+        "command": "cmd-lite.permission.pick",
         "title": "Pick Permission Mode",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.taste.openFile",
+        "command": "cmd-lite.taste.openFile",
         "title": "Open Taste File",
         "category": "Command Code",
         "icon": "$(go-to-file)"
       },
       {
-        "command": "commandcode.taste.push",
+        "command": "cmd-lite.taste.push",
         "title": "Push Taste Package",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.taste.pull",
+        "command": "cmd-lite.taste.pull",
         "title": "Pull Taste Package",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.taste.list",
+        "command": "cmd-lite.taste.list",
         "title": "List Taste Packages",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.taste.lint",
+        "command": "cmd-lite.taste.lint",
         "title": "Lint Taste Package",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.taste.learnHere",
+        "command": "cmd-lite.taste.learnHere",
         "title": "Learn Taste From Current Folder",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.taste.openWeb",
+        "command": "cmd-lite.taste.openWeb",
         "title": "Open Taste Profile on commandcode.ai",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.status",
+        "command": "cmd-lite.status",
         "title": "Show Command Code Status",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.info",
+        "command": "cmd-lite.info",
         "title": "Show System Info",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.login",
+        "command": "cmd-lite.login",
         "title": "Login to Command Code",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.logout",
+        "command": "cmd-lite.logout",
         "title": "Logout of Command Code",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.update",
+        "command": "cmd-lite.update",
         "title": "Update Command Code CLI",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.whoami",
+        "command": "cmd-lite.whoami",
         "title": "Show Current User",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.diff.show",
+        "command": "cmd-lite.diff.show",
         "title": "Show Diff",
         "category": "Command Code"
       },
       {
-        "command": "commandcode.agents.parallel",
+        "command": "cmd-lite.agents.parallel",
         "title": "Run Parallel Agents",
         "category": "Command Code"
       }
@@ -216,17 +218,17 @@
     "configuration": {
       "title": "Command Code",
       "properties": {
-        "commandcode.cliPath": {
+        "cmd-lite.cliPath": {
           "type": "string",
           "default": "cmd",
           "description": "Path to the `cmd` CLI binary. Override if you installed Command Code to a non-standard location."
         },
-        "commandcode.defaultModel": {
+        "cmd-lite.defaultModel": {
           "type": "string",
           "default": "",
           "description": "Model to use by default (e.g. claude-opus-4.8, deepseek-v4-pro). Leave empty to use CLI default."
         },
-        "commandcode.defaultPermissionMode": {
+        "cmd-lite.defaultPermissionMode": {
           "type": "string",
           "enum": [
             "standard",
@@ -236,17 +238,17 @@
           "default": "standard",
           "description": "Permission mode for new sessions."
         },
-        "commandcode.maxTurns": {
+        "cmd-lite.maxTurns": {
           "type": "number",
           "default": 10,
           "description": "Cap on conversation turns in headless / print mode."
         },
-        "commandcode.showStatusBar": {
+        "cmd-lite.showStatusBar": {
           "type": "boolean",
           "default": true,
           "description": "Show the session indicator in the status bar."
         },
-        "commandcode.context.maxSelectionLength": {
+        "cmd-lite.context.maxSelectionLength": {
           "type": "number",
           "default": 10000,
           "description": "Maximum characters of selected text to share with the CLI via the context server. Larger values mean more context for the AI but may slow down IPC."
@@ -255,9 +257,9 @@
     },
     "languageModelTools": [
       {
-        "name": "commandcode_runPrint",
+        "name": "cmd-lite_runPrint",
         "tags": [
-          "commandcode",
+          "cmd-lite",
           "ai",
           "coding"
         ],
@@ -293,9 +295,9 @@
         }
       },
       {
-        "name": "commandcode_getTaste",
+        "name": "cmd-lite_getTaste",
         "tags": [
-          "commandcode",
+          "cmd-lite",
           "taste"
         ],
         "toolReferenceName": "getTaste",
@@ -315,9 +317,9 @@
         }
       },
       {
-        "name": "commandcode_getDiagnostics",
+        "name": "cmd-lite_getDiagnostics",
         "tags": [
-          "commandcode",
+          "cmd-lite",
           "diagnostics"
         ],
         "toolReferenceName": "getDiagnostics",
@@ -337,9 +339,9 @@
         }
       },
       {
-        "name": "commandcode_getGitContext",
+        "name": "cmd-lite_getGitContext",
         "tags": [
-          "commandcode",
+          "cmd-lite",
           "git"
         ],
         "toolReferenceName": "getGitContext",
@@ -350,9 +352,9 @@
         "icon": "$(git-branch)"
       },
       {
-        "name": "commandcode_getOpenFiles",
+        "name": "cmd-lite_getOpenFiles",
         "tags": [
-          "commandcode",
+          "cmd-lite",
           "editor"
         ],
         "toolReferenceName": "getOpenFiles",
@@ -363,9 +365,9 @@
         "icon": "$(files)"
       },
       {
-        "name": "commandcode_listModels",
+        "name": "cmd-lite_listModels",
         "tags": [
-          "commandcode",
+          "cmd-lite",
           "models"
         ],
         "toolReferenceName": "listModels",
@@ -376,9 +378,9 @@
         "icon": "$(symbol-misc)"
       },
       {
-        "name": "commandcode_runParallel",
+        "name": "cmd-lite_runParallel",
         "tags": [
-          "commandcode",
+          "cmd-lite",
           "agents"
         ],
         "toolReferenceName": "runParallel",
@@ -441,28 +443,28 @@
     "menus": {
       "editor/context": [
         {
-          "command": "commandcode.print",
+          "command": "cmd-lite.print",
           "when": "editorTextFocus",
-          "group": "commandcode"
+          "group": "cmd-lite"
         }
       ],
       "explorer/context": [
         {
-          "command": "commandcode.print",
-          "group": "commandcode"
+          "command": "cmd-lite.print",
+          "group": "cmd-lite"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "commandcode.start",
+        "command": "cmd-lite.start",
         "key": "ctrl+shift+`",
         "mac": "cmd+shift+`"
       }
     ],
     "taskDefinitions": [
       {
-        "type": "commandcode",
+        "type": "cmd-lite",
         "properties": {
           "task": {
             "type": "string",

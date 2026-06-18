@@ -57,7 +57,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (choice === "Settings") {
         vscode.commands.executeCommand(
           "workbench.action.openSettings",
-          "commandcode.cliPath",
+          "cmd-lite.cliPath",
         );
       }
     });
@@ -69,7 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
         "Update",
       ).then((choice) => {
         if (choice === "Update") {
-          vscode.commands.executeCommand("commandcode.update");
+          vscode.commands.executeCommand("cmd-lite.update");
         }
       });
     }
@@ -92,11 +92,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider(
-      "commandcode.tasteView",
+      "cmd-lite.tasteView",
       tasteProvider,
     ),
     vscode.window.registerTreeDataProvider(
-      "commandcode.sessionView",
+      "cmd-lite.sessionView",
       sessionProvider,
     ),
     vscode.window.registerWebviewViewProvider(
@@ -113,17 +113,17 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(
-      "commandcode-diff",
+      "cmd-lite-diff",
       proposedDiffProvider,
     ),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("commandcode.model.pick", () => pickModel()),
-    vscode.commands.registerCommand("commandcode.permission.pick", () =>
+    vscode.commands.registerCommand("cmd-lite.model.pick", () => pickModel()),
+    vscode.commands.registerCommand("cmd-lite.permission.pick", () =>
       pickPermissionMode(),
     ),
-    vscode.commands.registerCommand("commandcode.diff.show", (output: string) => {
+    vscode.commands.registerCommand("cmd-lite.diff.show", (output: string) => {
       const diff = extractFirstDiffFile(output);
       if (diff) {
         showInlineDiff(diff.filePath, diff.content, "Command Code Proposal");
@@ -131,7 +131,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.showInformationMessage("No code changes found in the output.");
       }
     }),
-    vscode.commands.registerCommand("commandcode.agents.parallel", async () => {
+    vscode.commands.registerCommand("cmd-lite.agents.parallel", async () => {
       const result = await vscode.window.showInputBox({
         prompt: "Describe what to do (will be split across agents)",
         placeHolder: "Implement feature X with tests and docs",
@@ -157,14 +157,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
   statusBar.setPermissionMode(
     (vscode.workspace
-      .getConfiguration("commandcode")
+      .getConfiguration("cmd-lite")
       .get<string>("defaultPermissionMode", "standard") as
       | "standard"
       | "plan"
       | "auto-accept") ?? "standard",
   );
 
-  vscode.tasks.registerTaskProvider("commandcode", {
+  vscode.tasks.registerTaskProvider("cmd-lite", {
     provideTasks: () => [defineHeadlessTask()],
     resolveTask: () => undefined,
   });
@@ -178,10 +178,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("commandcode.cliPath")) {
+      if (e.affectsConfiguration("cmd-lite.cliPath")) {
         clearCliPathCache();
       }
-      if (e.affectsConfiguration("commandcode.showStatusBar")) {
+      if (e.affectsConfiguration("cmd-lite.showStatusBar")) {
         if (showStatusBarEnabled()) statusBar.show();
         else statusBar.hide();
       }

@@ -3,7 +3,7 @@ import type { PermissionMode } from "./cli/types";
 
 export function getEffectiveModel(): string | undefined {
   const value = vscode.workspace
-    .getConfiguration("commandcode")
+    .getConfiguration("cmd-lite")
     .get<string>("defaultModel", "")
     .trim();
   return value || undefined;
@@ -11,7 +11,7 @@ export function getEffectiveModel(): string | undefined {
 
 export function getEffectivePermissionMode(): PermissionMode {
   const value = vscode.workspace
-    .getConfiguration("commandcode")
+    .getConfiguration("cmd-lite")
     .get<string>("defaultPermissionMode", "standard");
   if (value === "plan" || value === "auto-accept" || value === "standard") {
     return value;
@@ -21,13 +21,13 @@ export function getEffectivePermissionMode(): PermissionMode {
 
 export function getEffectiveMaxTurns(): number {
   return vscode.workspace
-    .getConfiguration("commandcode")
+    .getConfiguration("cmd-lite")
     .get<number>("maxTurns", 10);
 }
 
 export function showStatusBarEnabled(): boolean {
   return vscode.workspace
-    .getConfiguration("commandcode")
+    .getConfiguration("cmd-lite")
     .get<boolean>("showStatusBar", true);
 }
 

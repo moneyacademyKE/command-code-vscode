@@ -9,6 +9,7 @@ import {
   IPC_AUTH_TIMEOUT_MS,
   type IpcMessage,
   type IpcRequest,
+  type IpcEvent,
   isAuthMessage,
   MAX_BUFFER_BYTES,
   MAX_MESSAGE_BYTES,
@@ -91,7 +92,7 @@ export class IPCServer implements vscode.Disposable {
   private readonly outputChannel: vscode.OutputChannel;
   private server: net.Server | null = null;
   private connections = new Set<net.Socket>();
-  private webviewDispatcher?: (eventPayload: any) => void;
+  private webviewDispatcher?: (eventPayload: unknown) => void;
   private uiLockOwner: net.Socket | null = null;
 
   constructor(
@@ -117,7 +118,7 @@ export class IPCServer implements vscode.Disposable {
     );
   }
 
-  setWebviewDispatcher(dispatcher: (eventPayload: any) => void): void {
+  setWebviewDispatcher(dispatcher: (eventPayload: unknown) => void): void {
     this.webviewDispatcher = dispatcher;
   }
 
@@ -127,14 +128,14 @@ export class IPCServer implements vscode.Disposable {
       return;
     }
 
-    const eventMessage = {
+    const eventMessage: IpcEvent = {
       type: "event",
       payload: {
         event: eventName,
         data,
       },
     };
-    this.sendMessage(this.uiLockOwner, eventMessage as any);
+    this.sendMessage(this.uiLockOwner, eventMessage);
   }
 
   async start(): Promise<void> {

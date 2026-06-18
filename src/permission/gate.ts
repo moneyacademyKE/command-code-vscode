@@ -19,7 +19,7 @@ export class PermissionGate implements vscode.Disposable {
     private readonly requests: PermissionRequest[],
   ) {
     this.panel = vscode.window.createWebviewPanel(
-      "commandcode.permissions",
+      "cmd-lite.permissions",
       "Command Code — Permissions",
       vscode.ViewColumn.Beside,
       {

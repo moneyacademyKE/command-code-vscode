@@ -17,7 +17,7 @@ export function registerTasteCommands(
   outputChannel: vscode.OutputChannel,
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand("commandcode.taste.openFile", async () => {
+    vscode.commands.registerCommand("cmd-lite.taste.openFile", async () => {
       const cwd = getActiveCwd();
       const filePath = vscode.Uri.file(
         path.join(cwd, ".commandcode", "taste", "taste.md"),
@@ -31,7 +31,7 @@ export function registerTasteCommands(
       }
     }),
 
-    vscode.commands.registerCommand("commandcode.taste.push", async () => {
+    vscode.commands.registerCommand("cmd-lite.taste.push", async () => {
       const packageName = await vscode.window.showInputBox({
         prompt: "Taste package name to push (leave empty to push all)",
         placeHolder: "cli, frontend, …",
@@ -44,7 +44,7 @@ export function registerTasteCommands(
       provider.refresh();
     }),
 
-    vscode.commands.registerCommand("commandcode.taste.pull", async () => {
+    vscode.commands.registerCommand("cmd-lite.taste.pull", async () => {
       const packageName = await vscode.window.showInputBox({
         prompt: "Taste package to pull",
         placeHolder: "owner/cli, ahmadawais/cli, …",
@@ -55,7 +55,7 @@ export function registerTasteCommands(
       provider.refresh();
     }),
 
-    vscode.commands.registerCommand("commandcode.taste.list", async () => {
+    vscode.commands.registerCommand("cmd-lite.taste.list", async () => {
       const result = await tasteList({ cwd: getActiveCwd() });
       if (result.length === 0) {
         vscode.window.showInformationMessage("No taste packages found.");
@@ -71,12 +71,12 @@ export function registerTasteCommands(
       }
     }),
 
-    vscode.commands.registerCommand("commandcode.taste.lint", async () => {
+    vscode.commands.registerCommand("cmd-lite.taste.lint", async () => {
       const result = await tasteLint(undefined, getActiveCwd());
       showResult("Lint taste", result.stdout, result.stderr, outputChannel);
     }),
 
-    vscode.commands.registerCommand("commandcode.taste.learnHere", async () => {
+    vscode.commands.registerCommand("cmd-lite.taste.learnHere", async () => {
       const cwd = getActiveCwd();
       const source = await vscode.window.showInputBox({
         prompt: "Source to learn taste from",
@@ -89,7 +89,7 @@ export function registerTasteCommands(
       provider.refresh();
     }),
 
-    vscode.commands.registerCommand("commandcode.taste.openWeb", () => {
+    vscode.commands.registerCommand("cmd-lite.taste.openWeb", () => {
       vscode.env.openExternal(vscode.Uri.parse("https://commandcode.ai/studio"));
     }),
   );

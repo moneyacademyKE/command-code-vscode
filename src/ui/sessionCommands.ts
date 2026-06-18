@@ -22,17 +22,17 @@ export function registerSessionCommands(
   const extUri = context.extensionUri;
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("commandcode.start", () => {
+    vscode.commands.registerCommand("cmd-lite.start", () => {
       const cwd = getActiveCwd();
       startInteractiveSession(extUri, { cwd, trust: true });
     }),
 
-    vscode.commands.registerCommand("commandcode.continue", () => {
+    vscode.commands.registerCommand("cmd-lite.continue", () => {
       const cwd = getActiveCwd();
       startInteractiveSession(extUri, { cwd, continueLast: true, trust: true });
     }),
 
-    vscode.commands.registerCommand("commandcode.resume", async () => {
+    vscode.commands.registerCommand("cmd-lite.resume", async () => {
       const cwd = getActiveCwd();
       const name = await vscode.window.showInputBox({
         prompt: "Resume which session?",
@@ -47,7 +47,7 @@ export function registerSessionCommands(
       }
     }),
 
-    vscode.commands.registerCommand("commandcode.print", async () => {
+    vscode.commands.registerCommand("cmd-lite.print", async () => {
       const cwd = getActiveCwd();
       const prompt = await vscode.window.showInputBox({
         prompt: "Run a headless query",
@@ -66,7 +66,7 @@ export function registerSessionCommands(
       }
     }),
 
-    vscode.commands.registerCommand("commandcode.plan", async () => {
+    vscode.commands.registerCommand("cmd-lite.plan", async () => {
       const cwd = getActiveCwd();
       const prompt = await vscode.window.showInputBox({
         prompt: "Plan a task (no files will be modified)",
@@ -89,7 +89,7 @@ export function registerSessionCommands(
       }
     }),
 
-    vscode.commands.registerCommand("commandcode.review", async () => {
+    vscode.commands.registerCommand("cmd-lite.review", async () => {
       const cwd = getActiveCwd();
       const pr = await vscode.window.showInputBox({
         prompt: "Pull request number (leave empty for current branch)",
@@ -109,20 +109,20 @@ export function registerSessionCommands(
       }
     }),
 
-    vscode.commands.registerCommand("commandcode.status", async () => {
+    vscode.commands.registerCommand("cmd-lite.status", async () => {
       const text = await getStatus(getActiveCwd());
       outputChannel.clear();
       outputChannel.appendLine(text);
       outputChannel.show(true);
     }),
 
-    vscode.commands.registerCommand("commandcode.info", async () => {
+    vscode.commands.registerCommand("cmd-lite.info", async () => {
       const cwd = getActiveCwd();
       const text = await getInfo(cwd);
       vscode.window.showInformationMessage(text.split(/\r?\n/).slice(0, 6).join(" | "));
     }),
 
-    vscode.commands.registerCommand("commandcode.login", () => {
+    vscode.commands.registerCommand("cmd-lite.login", () => {
       const cwd = getActiveCwd();
       const cliPath = resolveCliPath();
       const terminal = vscode.window.createTerminal({
@@ -134,13 +134,13 @@ export function registerSessionCommands(
       sessionTree.refresh();
     }),
 
-    vscode.commands.registerCommand("commandcode.logout", async () => {
+    vscode.commands.registerCommand("cmd-lite.logout", async () => {
       const cwd = getActiveCwd();
       await logout(cwd);
       sessionTree.refresh();
     }),
 
-    vscode.commands.registerCommand("commandcode.update", async () => {
+    vscode.commands.registerCommand("cmd-lite.update", async () => {
       statusBar.setBusy(true);
       try {
         const result = await updateCli(getActiveCwd());
@@ -154,7 +154,7 @@ export function registerSessionCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("commandcode.whoami", async () => {
+    vscode.commands.registerCommand("cmd-lite.whoami", async () => {
       const who = await whoami(getActiveCwd());
       vscode.window.showInformationMessage(`Command Code: ${who}`);
     }),

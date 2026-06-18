@@ -16,7 +16,7 @@ export class StatusBar {
       vscode.StatusBarAlignment.Right,
       100,
     );
-    this.item.command = "commandcode.permission.pick";
+    this.item.command = "cmd-lite.permission.pick";
     this.update();
   }
 

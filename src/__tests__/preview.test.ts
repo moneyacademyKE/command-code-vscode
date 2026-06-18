@@ -24,7 +24,7 @@ import { proposedDiffProvider, parseCodeBlocks, extractFirstDiffFile } from "../
 
 describe("ProposedDiffContentProvider", () => {
   it("stores and provides virtual document contents", () => {
-    const testUri = { toString: () => "commandcode-diff://proposed/src/main.js" } as vscode.Uri;
+    const testUri = { toString: () => "cmd-lite-diff://proposed/src/main.js" } as vscode.Uri;
     const testContent = "function hello() { return 'world'; }";
     
     proposedDiffProvider.updateContent(testUri, testContent);
@@ -34,7 +34,7 @@ describe("ProposedDiffContentProvider", () => {
   });
 
   it("returns empty string for unregistered URIs", () => {
-    const unregisteredUri = { toString: () => "commandcode-diff://proposed/nonexistent.js" } as vscode.Uri;
+    const unregisteredUri = { toString: () => "cmd-lite-diff://proposed/nonexistent.js" } as vscode.Uri;
     const resolved = proposedDiffProvider.provideTextDocumentContent(unregisteredUri);
     expect(resolved).toBe("");
   });

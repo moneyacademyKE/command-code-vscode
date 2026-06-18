@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
+
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'commandcode.chatView';
+  public static readonly viewType = 'cmd-lite.chatView';
 
   private _view?: vscode.WebviewView;
 
@@ -13,7 +13,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ) {
     this._view = webviewView;
@@ -48,7 +48,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     );
 
     const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'style.css')
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview', 'style.css')
     );
 
     // Use a nonce to only allow a specific script to be run.

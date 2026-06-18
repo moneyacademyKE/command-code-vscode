@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /**
  * Thin Glass UI Renderer
  * This script runs in the webview. It has no complex state of its own.
@@ -5,11 +6,11 @@
  * and emits DOM events back.
  */
 
-// @ts-ignore
+// @ts-expect-error
 const vscode = acquireVsCodeApi();
 
 // Minimal application state (mirrored from CLI)
-let state = {
+const state = {
   messages: [] as Array<{ id: string, role: string, content: string }>,
   tokens: { prompt: 0, completion: 0, total: 0 },
   modelId: ''
@@ -64,7 +65,7 @@ function initUI() {
   };
 
   sendBtn?.addEventListener('click', sendMessage);
-  input?.addEventListener('keydown', (e) => {
+  input?.addEventListener('keydown', (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -100,7 +101,7 @@ function updateModel() {
 }
 
 // Listen for JSON-RPC payloads from the extension
-window.addEventListener('message', event => {
+window.addEventListener('message', (event: MessageEvent) => {
   const message = event.data;
   
   if (message.jsonrpc === '2.0' && message.method === 'webview/dispatchEvent') {

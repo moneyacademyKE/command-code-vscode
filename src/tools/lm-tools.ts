@@ -8,31 +8,31 @@ import { runParallel, formatParallelResults, type AgentTask } from "../agents/or
 export function registerLmTools(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.lm.registerTool(
-      "commandcode_runPrint",
+      "cmd-lite_runPrint",
       new RunPrintTool(),
     ),
     vscode.lm.registerTool(
-      "commandcode_getTaste",
+      "cmd-lite_getTaste",
       new GetTasteTool(),
     ),
     vscode.lm.registerTool(
-      "commandcode_getDiagnostics",
+      "cmd-lite_getDiagnostics",
       new GetDiagnosticsTool(),
     ),
     vscode.lm.registerTool(
-      "commandcode_getGitContext",
+      "cmd-lite_getGitContext",
       new GetGitContextTool(),
     ),
     vscode.lm.registerTool(
-      "commandcode_getOpenFiles",
+      "cmd-lite_getOpenFiles",
       new GetOpenFilesTool(),
     ),
     vscode.lm.registerTool(
-      "commandcode_listModels",
+      "cmd-lite_listModels",
       new ListModelsTool(),
     ),
     vscode.lm.registerTool(
-      "commandcode_runParallel",
+      "cmd-lite_runParallel",
       new RunParallelTool(),
     ),
   );

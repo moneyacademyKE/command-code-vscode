@@ -9,10 +9,10 @@ import {
 
 export function defineHeadlessTask(): vscode.Task {
   const task = new vscode.Task(
-    { type: "commandcode", task: "headless" },
+    { type: "cmd-lite", task: "headless" },
     vscode.TaskScope.Workspace,
     "Command Code (headless)",
-    "commandcode",
+    "cmd-lite",
     new vscode.CustomExecution(async (): Promise<vscode.Pseudoterminal> => {
       return new HeadlessPseudoterminal();
     }),

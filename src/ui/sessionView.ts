@@ -95,8 +95,8 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeI
     const items: vscode.TreeItem[] = [];
 
     // Quick actions
-    items.push(buildCommand("Start New Session", "commandcode.start", "play"));
-    items.push(buildCommand("Continue Last Session", "commandcode.continue", "history"));
+    items.push(buildCommand("Start New Session", "cmd-lite.start", "play"));
+    items.push(buildCommand("Continue Last Session", "cmd-lite.continue", "history"));
 
     if (sessions.length > 0) {
       // Separator
@@ -114,7 +114,7 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeI
         const ti = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
         ti.description = description;
         ti.iconPath = new vscode.ThemeIcon(statusIcon);
-        ti.command = { command: "commandcode.resume", title: "Resume Session" };
+        ti.command = { command: "cmd-lite.resume", title: "Resume Session" };
         ti.tooltip = `Resume session: ${session.id.slice(0, 8)}\nModel: ${session.model ?? "unknown"}\nStatus: ${session.goalStatus ?? "unknown"}`;
         items.push(ti);
       }
@@ -125,9 +125,9 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeI
     footerSep.iconPath = new vscode.ThemeIcon("tools");
     items.push(footerSep);
 
-    items.push(buildCommand("Pick Model", "commandcode.model.pick", "symbol-misc"));
-    items.push(buildCommand("Pick Permission", "commandcode.permission.pick", "shield"));
-    items.push(buildCommand("Show Status", "commandcode.status", "info"));
+    items.push(buildCommand("Pick Model", "cmd-lite.model.pick", "symbol-misc"));
+    items.push(buildCommand("Pick Permission", "cmd-lite.permission.pick", "shield"));
+    items.push(buildCommand("Show Status", "cmd-lite.status", "info"));
 
     return items;
   }

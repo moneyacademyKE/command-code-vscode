@@ -111,7 +111,7 @@ export class ContextProvider implements vscode.Disposable {
 
   constructor() {
     this.config = vscode.workspace.getConfiguration(
-      "commandcode.context",
+      "cmd-lite.context",
     );
     this.setupListeners();
     void this.updateContext();
@@ -133,11 +133,11 @@ export class ContextProvider implements vscode.Disposable {
       ),
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (
-          !e.affectsConfiguration("commandcode.context")
+          !e.affectsConfiguration("cmd-lite.context")
         )
           return;
         this.config = vscode.workspace.getConfiguration(
-          "commandcode.context",
+          "cmd-lite.context",
         );
         void this.updateContext();
       }),

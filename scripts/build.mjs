@@ -38,5 +38,6 @@ if (watch) {
   console.log("Watching for changes...");
 } else {
   await Promise.all([build(extensionOptions), build(webviewOptions)]);
+  await copyFile("src/webview/style.css", path.join(outdir, "webview/style.css"));
   console.log("Build complete.");
 }
