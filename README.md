@@ -20,12 +20,12 @@ The unofficial extension is built as a **decoupled, feature-rich wrapper** that 
 | **Chat Participant (`@cmd`)** | ❌ | ✅ | **Feature**: Native chat UI routing queries to `cmd -p` with cancellation. |
 | **Language Model Tools (6 Tools)** | ❌ | ✅ | **Feature**: Exposes IDE capabilities (`runPrint`, `getTaste`, etc.) to Copilot/Agents. |
 | **Parallel Agent Orchestration** | ❌ | ✅ | **Feature**: Coordinates concurrent `cmd --headless` tasks (impl, tests, docs). |
-| **Inline Diff Previews** | ❌ | ✅ | **Feature**: Intercepts code modifications and presents them via `vscode.diff()`. |
+| **Inline Diff Previews** | ❌ | ✅ | **Feature**: Intercepts code modifications and presents them via `vscode.diff()` using a custom virtual provider to preserve syntax highlighting and file editability. |
 | **Taste Sidebar TreeView** | ❌ | ✅ | **Feature**: Employs `FileSystemWatcher` for reactive reload of `.commandcode/taste/`. |
 | **Status Bar Controller** | ❌ | ✅ | **Feature**: Quick settings selector for active model, permission modes, and status. |
 | **Session History Log** | ❌ | ✅ | **Feature**: Reads active sessions and metadata straight from `~/.commandcode/projects/`. |
 | **Reactive Configuration** | ❌ | ✅ | **Robust**: Instantly updates CLI path validation and status bars on setting changes. |
-| **Test Coverage** | ❌ | ✅ | **Quality**: 33 unit tests configured with Vitest. |
+| **Test Coverage** | ❌ | ✅ | **Quality**: 38 unit tests configured with Vitest + automated GitHub Actions CI. |
 | **CLI Auto-Bundle** | ✅ | ❌ | **Trade-off**: Requires manual CLI installation (`npm i -g command-code`). |
 
 ---
@@ -49,6 +49,7 @@ Running multiple agents concurrently (e.g., implementing, testing, and documenti
 | **IPC Context Server** | High | Medium | Essential | **Adopted.** Essential for feeding editor state without CLI polling. |
 | **UDS Token Handshake** | High | Low | Security | **Adopted.** Ensures only the authenticated VS Code editor can connect to the UDS socket. |
 | **Parallel Orchestration** | High | Medium | Concurrency | **Adopted.** Spawns concurrent subprocesses and aggregates results without locking the editor. |
+| **Virtual Diff Provider** | High | Low | Essential | **Adopted.** Employs a custom `TextDocumentContentProvider` to retain syntax highlighting and file editability. |
 | **Inline Autocomplete (LSP)**| Medium | High | Accidental | **Rejected.** Bypasses the unified `taste-1` CLI loop and complects the LSP with the editor. |
 
 ---

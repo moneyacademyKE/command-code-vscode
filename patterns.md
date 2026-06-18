@@ -15,3 +15,10 @@
 ## External Process Environment Isolation Pattern
 - When wrapping global command-line utilities, resolve binary paths dynamically using standard shell lookups (`which` / `$PATH`), but log warnings or errors if multiple package manager prefixes (e.g. yarn global vs npm global) register the binary on different paths with mismatching versions.
 
+## Bi-directional IPC Context Decoupling Pattern
+- Decouples workspace data gathering from core agent logic.
+- Instead of the agent querying the editor via high-overhead extension commands, the extension exposes a lightweight UDS context server. The CLI connects to this socket to retrieve filesystem, diagnostics, and VCS state, minimizing IPC overhead.
+
+## Composed Agent Tools Pattern
+- Registers core agent execution functions as native VS Code Language Model Tools (`languageModelTools`).
+- Allows parent agents/participants (e.g., Copilot Chat) to discover and compose the Command Code agent (`cmd`) as a sub-agent without needing direct implementation coupling.

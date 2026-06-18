@@ -31,7 +31,7 @@ import {
   cleanupSocket,
 } from "./context/session";
 import { registerLmTools } from "./tools/lm-tools";
-import { showInlineDiff, extractFirstDiffFile } from "./diff/preview";
+import { showInlineDiff, extractFirstDiffFile, proposedDiffProvider } from "./diff/preview";
 import { runParallel, formatParallelResults, type AgentTask } from "./agents/orchestrator";
 
 let currentSessionId: string | null = null;
@@ -98,6 +98,13 @@ export function activate(context: vscode.ExtensionContext): void {
   registerSessionCommands(context, statusBar, sessionProvider, outputChannel);
   registerChatParticipant(context);
   registerLmTools(context);
+
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider(
+      "commandcode-diff",
+      proposedDiffProvider,
+    ),
+  );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("commandcode.model.pick", () => pickModel()),

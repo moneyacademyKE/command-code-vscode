@@ -1,5 +1,26 @@
 import * as vscode from "vscode";
+import * as path from "node:path";
+import * as fs from "node:fs";
 import { stripAnsi } from "../chat/format";
+
+export class ProposedDiffContentProvider implements vscode.TextDocumentContentProvider {
+  private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+  readonly onDidChange = this._onDidChange.event;
+
+  private contentMap = new Map<string, string>();
+
+  updateContent(uri: vscode.Uri, content: string) {
+    this.contentMap.set(uri.toString(), content);
+    this._onDidChange.fire(uri);
+  }
+
+  provideTextDocumentContent(uri: vscode.Uri): string {
+    return this.contentMap.get(uri.toString()) ?? "";
+  }
+}
+
+export const proposedDiffProvider = new ProposedDiffContentProvider();
+
 
 interface CodeBlock {
   language?: string;
@@ -69,22 +90,21 @@ export async function showDiff(
   modifiedContent: string,
   title: string,
 ): Promise<void> {
-  const originalContent = await readFileContent(originalUri);
+  let originalFileUri = originalUri;
+  if (!fs.existsSync(originalUri.fsPath)) {
+    const emptyUri = vscode.Uri.parse(`commandcode-diff://empty${originalUri.path}`);
+    proposedDiffProvider.updateContent(emptyUri, "");
+    originalFileUri = emptyUri;
+  }
 
-  const originalDoc = await vscode.workspace.openTextDocument({
-    content: originalContent,
-    language: "plaintext",
-  });
-  const modifiedDoc = await vscode.workspace.openTextDocument({
-    content: modifiedContent,
-    language: "plaintext",
-  });
+  const virtualUri = vscode.Uri.parse(`commandcode-diff://proposed${originalUri.path}`);
+  proposedDiffProvider.updateContent(virtualUri, modifiedContent);
 
   await vscode.commands.executeCommand(
     "vscode.diff",
-    originalDoc.uri,
-    modifiedDoc.uri,
-    `${title} (${originalUri.fsPath})`,
+    originalFileUri,
+    virtualUri,
+    `${title}: proposed changes for ${path.basename(originalUri.fsPath)}`,
   );
 }
 
@@ -94,35 +114,9 @@ export async function showInlineDiff(
   title: string,
 ): Promise<void> {
   const uri = vscode.Uri.file(filePath);
-  try {
-    await showDiff(uri, newContent, title);
-  } catch {
-    const originalContent = "";
-    const originalDoc = await vscode.workspace.openTextDocument({
-      content: originalContent,
-      language: "plaintext",
-    });
-    const modifiedDoc = await vscode.workspace.openTextDocument({
-      content: newContent,
-      language: "plaintext",
-    });
-    await vscode.commands.executeCommand(
-      "vscode.diff",
-      originalDoc.uri,
-      modifiedDoc.uri,
-      `${title} (${filePath})`,
-    );
-  }
+  await showDiff(uri, newContent, title);
 }
 
-async function readFileContent(uri: vscode.Uri): Promise<string> {
-  try {
-    const bytes = await vscode.workspace.fs.readFile(uri);
-    return new TextDecoder().decode(bytes);
-  } catch {
-    return "";
-  }
-}
 
 export function hasCodeProposal(output: string): boolean {
   const blocks = parseCodeBlocks(output);

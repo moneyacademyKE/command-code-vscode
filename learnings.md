@@ -23,15 +23,15 @@ To install and run this extension:
 3. **Build from Source & Package**:
    To compile and package locally:
    ```bash
-   pnpm install
-   pnpm build
-   pnpm package
+   npm install
+   npm run build
+   npm run package
    code --install-extension command-code-0.1.0.vsix
    ```
 
 ## Development Commands
-- `pnpm watch` for auto-compilation during development.
-- `pnpm typecheck` to run typescript checks.
+- `npm run watch` for auto-compilation during development.
+- `npm run typecheck` to run typescript checks.
 
 ## CLI Session Management Gotchas
 - **Argument Parsing Behavior**: Running `cmd -reset` or `cmd -restart` leads to errors like `No session named "eset" found.` because the parser interprets `-r` as the short flag for `--resume [name]` and consumes the remaining characters (`eset` or `estart`) as the session identifier.
@@ -49,4 +49,10 @@ To install and run this extension:
   ```
 - Refer to [gap-analysis.md](file:///Users/moe/Desktop/cmd/docs/gap-analysis.md) for a comprehensive feature breakdown of `v0.39.0`.
 
-
+## Extension Architecture & IPC Learnings (v0.1.0)
+- **Token Handshake Security**: The extension secures UDS connections by establishing a UUID token handshake. The token is stored in the local session file, restricting access to processes that have access to the session directory (permissions set to `0o700`).
+- **Debounced Context Updates**: Selection changes in the editor are debounced by 100ms before broadcasting to the context server. This avoids flooding the UDS IPC with message traffic during continuous editing.
+- **Language Model Tools Integration**: Exposing `commandcode_runPrint`, `commandcode_getTaste`, and `commandcode_getDiagnostics` allows the Command Code agent to compose with other IDE chat participants (e.g. Copilot).
+- **Session History Mapping**: Session history is parsed directly from `~/.commandcode/projects/{slug}/{uuid}.jsonl` metadata files, translating CLI execution logs into interactive sidebar components.
+- **Headless Execution Authorization**: When executing `cmd` non-interactively via background processes or command runners (e.g., `-p` print mode), the `--yolo` flag (alias for `--dangerously-skip-permissions`) is required to authorize filesystem modification tools; otherwise, the agent is restricted by security sandbox defaults and halts.
+- **Version Control Safety**: Initializing local Git tracking in the target workspace allows the agent to safely compute diff boundaries, run testing iterations, and roll back unintended modifications during automated execution loops.
