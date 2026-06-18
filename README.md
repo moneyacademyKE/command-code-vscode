@@ -1,131 +1,112 @@
-# Command Code — VS Code Extension
+# Command Code VS Code Extension — Gap Analysis & Implementation Guide
 
-A coding agent with taste, in your editor. This extension wraps the [`cmd` CLI](https://commandcode.ai) and surfaces it as a native VS Code experience — chat panel, taste sidebar, status bar indicator, plan mode, and team taste workflows.
+> [!NOTE]
+> This repository houses the unofficial, community-driven VS Code extension for [Command Code (`cmd`)](https://commandcode.ai).
+> Below is a comprehensive Gap Analysis comparing the **Official Command Code Extension** vs. **This Unofficial Extension** under the lens of Rich Hickey's Simplicity principles.
 
-It does **not** fork VS Code. It does **not** re-implement taste learning. It shells out to `cmd` (which you install with `npm i -g command-code`) and gives you first-class IDE surfaces for it.
+---
 
-## Install
+## 📊 Feature Matrix: Unofficial vs. Official Extension
 
-### 1. Prerequisites (Install the CLI)
-The extension shells out to the `cmd` CLI. First, install the CLI globally:
+The unofficial extension is built as a **decoupled, feature-rich wrapper** that acts as a functional superset of the official plugin, exposing rich UI interactions while keeping state management clean.
+
+| Capability | Official Extension | Unofficial Extension (This Repo) | Architectural Status |
+| :--- | :---: | :---: | :--- |
+| **IPC Context Server (UDS Socket)** | ✅ | ✅ | **Unified**: Shares real-time workspace state over Unix Domain Sockets. |
+| **Active Editor Selection Sharing** | ✅ | ✅ | **Optimized**: Shares active selection, debounced to prevent IPC lag. |
+| **Diagnostics / Error Sharing** | ✅ | ✅ | **Unified**: Relays IDE diagnostics (errors, warnings, hints) to the CLI. |
+| **Git Context Relay** | ❌ | ✅ | **Extended**: Shares branch name, HEAD commit hash, and list of modified files. |
+| **UDS Socket Authentication** | ❌ | ✅ | **Secured**: Implements UUID token handshakes and process-isolated socket permissions (`0o600`). |
+| **Chat Participant (`@cmd`)** | ❌ | ✅ | **Feature**: Native chat UI routing queries to `cmd -p` with cancellation. |
+| **Language Model Tools (6 Tools)** | ❌ | ✅ | **Feature**: Exposes IDE capabilities (`runPrint`, `getTaste`, etc.) to Copilot/Agents. |
+| **Parallel Agent Orchestration** | ❌ | ✅ | **Feature**: Coordinates concurrent `cmd --headless` tasks (impl, tests, docs). |
+| **Inline Diff Previews** | ❌ | ✅ | **Feature**: Intercepts code modifications and presents them via `vscode.diff()`. |
+| **Taste Sidebar TreeView** | ❌ | ✅ | **Feature**: Employs `FileSystemWatcher` for reactive reload of `.commandcode/taste/`. |
+| **Status Bar Controller** | ❌ | ✅ | **Feature**: Quick settings selector for active model, permission modes, and status. |
+| **Session History Log** | ❌ | ✅ | **Feature**: Reads active sessions and metadata straight from `~/.commandcode/projects/`. |
+| **Reactive Configuration** | ❌ | ✅ | **Robust**: Instantly updates CLI path validation and status bars on setting changes. |
+| **Test Coverage** | ❌ | ✅ | **Quality**: 33 unit tests configured with Vitest. |
+| **CLI Auto-Bundle** | ✅ | ❌ | **Trade-off**: Requires manual CLI installation (`npm i -g command-code`). |
+
+---
+
+## 🧠 Rich Hickey Analysis: Simplicity vs. Easiness
+
+In analyzing editor integrations (such as comparing Command Code with competitors like Kilo Code), we apply Rich Hickey’s principles of **decomplecting** state and prioritizing **simplicity** (untangling concerns) over **easiness** (immediate convenience that complects systems).
+
+### 1. Decomplecting Editor & Agent State
+* **Accidental Complexity (The Fork/Heavy Extension Path):** Deeply hooking into the editor's token stream or webviews to manage agent sessions (e.g. Cursor forks or Kilo Code's heavy client logic). This complects the editor lifecycle with the AI inference state.
+* **Essential Simplicity (Our Extension Wrapper Path):** Treating the editor purely as a "dumb UI frontend" and a read-only context provider. All agent state, decision loops, and `taste-1` learning reside exclusively inside the `cmd` CLI. The UDS socket separates these domains cleanly.
+
+### 2. Concurrency (Parallel Agent Orchestration)
+Running multiple agents concurrently (e.g., implementing, testing, and documenting at once) is high-utility but traditionally complects state.
+* **Simple Implementation:** We treat the project's instructions and "taste" preferences as immutable values. Our parallel agent module spawns concurrent `cmd --headless` subprocesses. Each process operates independently without mutating live code, outputting proposal events that are merged or reviewed sequentially.
+
+### 3. Complexity vs. Utility Matrix
+
+| Capability | Utility | Technical Complexity | Architectural Type | Verdict |
+| :--- | :---: | :---: | :---: | :--- |
+| **IPC Context Server** | High | Medium | Essential | **Adopted.** Essential for feeding editor state without CLI polling. |
+| **UDS Token Handshake** | High | Low | Security | **Adopted.** Ensures only the authenticated VS Code editor can connect to the UDS socket. |
+| **Parallel Orchestration** | High | Medium | Concurrency | **Adopted.** Spawns concurrent subprocesses and aggregates results without locking the editor. |
+| **Inline Autocomplete (LSP)**| Medium | High | Accidental | **Rejected.** Bypasses the unified `taste-1` CLI loop and complects the LSP with the editor. |
+
+---
+
+## 🛠️ Installation & Quick Start
+
+### 1. Prerequisites (CLI Installation)
+Since we do not bundle the proprietary binary, you must install the `command-code` CLI globally:
 
 ```bash
 npm i -g command-code
 ```
 
-### 2. Install the Extension
+> [!TIP]
+> In environments with both npm and yarn configured globally, updating the CLI using standard `cmd update` might modify the NPM prefix while leaving the active Homebrew system binary pointing to the legacy Yarn path. If your CLI version is mismatched, update via:
+> ```bash
+> yarn global add command-code@latest
+> ```
 
-#### Option A: Install Pre-built Extension (Recommended)
-If you have the pre-built `.vsix` file (`command-code-0.1.0.vsix`) in your workspace, install it directly:
+### 2. Install the Extension VSIX
+You can download the packaged extension from our [GitHub Releases](https://github.com/moneyacademyKE/command-code-vscode/releases) page. Install it directly via your terminal:
 
 ```bash
 code --install-extension command-code-0.1.0.vsix
 ```
 
-#### Option B: Build and Install from Source (For Development)
-If you are developing the extension, you can install dependencies, build, and package it yourself:
+---
+
+## 💻 Developer Guide
+
+If you are contributing to this extension:
 
 ```bash
-pnpm install       # Install dependencies (or npm install)
-pnpm build         # Build (or npm run build)
-pnpm package       # Packages into command-code-0.1.0.vsix
-code --install-extension command-code-0.1.0.vsix
+# Install dependencies
+npm install
+
+# Run build compilation
+npm run build
+
+# Run lint checks
+npm run lint
+
+# Run unit tests
+npm test
+
+# Build packaged .vsix extension
+npm run package
 ```
 
-## Features
+### Key Configurations (`settings.json`)
 
-### IPC Context Server (Background UDS)
-- **Unix Domain Socket (UDS)** server that shares real-time workspace context with the `cmd` CLI.
-- **Token Handshake Auth**: Secured with atomic UUID token validation and process-isolated access permissions.
-- **Rich Editor Context**: Debounced editor selection sharing, active file status, and open tabs group tracking.
-- **Git Context Relay**: Real-time git branch name, HEAD commit hash, commit message, and list of modified/untracked files.
-- **Diagnostics Reporting**: Groups compiler errors, warnings, and lint messages by file to provide high-fidelity error contexts.
+* `commandcode.cliPath`: Custom path to your `cmd` executable (defaults to `cmd`).
+* `commandcode.defaultModel`: Default model override (e.g. `claude-opus-4.8`).
+* `commandcode.defaultPermissionMode`: Default permission mode (`standard`, `plan`, `auto-accept`).
+* `commandcode.showStatusBar`: Toggle the status bar session indicator.
+* `commandcode.context.maxSelectionLength`: Caps the text selection context shared over IPC.
 
-### Language Model Tools (Copilot / Agent Integration)
-- Declares 6 native tools to let VS Code Chat and other agents invoke Command Code capabilities:
-  - `commandcode_runPrint`: Run CLI prompts.
-  - `commandcode_getTaste`: Get learned project coding preferences.
-  - `commandcode_getDiagnostics`: Get editor error/warning diagnostics.
-  - `commandcode_getGitContext`: Read git status and branch information.
-  - `commandcode_getOpenFiles`: List currently open documents.
-  - `commandcode_listModels`: Enumerate supported AI models.
-  - `commandcode_runParallel`: Coordinate concurrent subtasks.
+---
 
-### Parallel Agent Orchestration
-- Spawns multiple `cmd --headless` processes concurrently (e.g. implementation, tests, docs) to run independent tasks.
-- Aggregates outputs, manages synchronization, and formats execution summaries in a dedicated output channel.
-
-### Inline Diff Previews
-- Automatically extracts diffs from the CLI generator's output stream and presents them in a side-by-side native VS Code comparison view (`vscode.diff()`).
-
-### Chat participant (`@cmd`)
-- Streaming responses through `cmd -p` with progress indicators
-- Slash-style commands: `plan`, `review`, `taste`, `learn`
-- Multi-model support (Claude, GPT, Kimi, DeepSeek, GLM, Qwen, etc.)
-- Plan mode built-in
-
-### Taste sidebar
-- TreeView of `.commandcode/taste/taste.md` and category files
-- Live reload via `FileSystemWatcher`
-- Inline preview of the first line of each file
-
-### Commands
-- `Command Code: Start Session` — open an interactive `cmd` session (in your terminal)
-- `Command Code: Continue Last` — `cmd -c`
-- `Command Code: Resume Past…` — `cmd -r <name>`
-- `Command Code: Run Headless…` — `cmd -p <prompt>` into an output channel
-- `Command Code: Plan…` — opens a Markdown scratchpad with the plan
-- `Command Code: Review PR…` — review current branch or a PR number
-- `Command Code: Pick Model` — switches the active model
-- `Command Code: Pick Permission` — standard / plan / auto-accept
-- `Command Code: Push Taste` / `Pull Taste` / `List Taste` / `Lint Taste` — share taste with your team
-- `Command Code: Learn Taste From Current Folder`
-- `Command Code: Open Taste Profile on commandcode.ai`
-- `Command Code: Show Status` / `Show System Info` / `Login` / `Logout` / `Update`
-- `Command Code: Run Parallel Agents` — run impl, tests, and docs concurrently
-- `Command Code: Show Diff` — view the proposed code changes side-by-side
-
-### Status bar
-- `cmd · standard · claude-opus-4.8` — click to switch permission mode.
-
-### Tasks
-- `Command Code (headless)` task runs `cmd -p` in a pseudo-terminal. Open with `Terminal → Run Task`.
-
-## Configuration
-
-| Setting | Default | Notes |
-|---|---|---|
-| `commandcode.cliPath` | `cmd` | Override if you installed the CLI to a non-standard path |
-| `commandcode.defaultModel` | _(empty)_ | e.g. `claude-opus-4.8`, `deepseek-v4-pro` |
-| `commandcode.defaultPermissionMode` | `standard` | `standard` / `plan` / `auto-accept` |
-| `commandcode.maxTurns` | `10` | Cap on turns for headless / print mode |
-| `commandcode.showStatusBar` | `true` | Hide if you don't want the indicator |
-
-## Architecture
-
-```
-VS Code Chat API ─┐
-Taste Sidebar    ─┼──► src/extension.ts ──► src/cli/spawn.ts ──► cmd binary
-Status Bar       ─┘                                  │
-                                                      ▼
-                                          .commandcode/taste/**
-```
-
-`src/cli/commands.ts` is the only thing that knows about `cmd` flags. Everything else talks through that.
-
-## Why not a fork?
-
-See [VS Code Plugin vs. Fork — Gap Analysis](docs/vscode-plugin-or-fork-gap-analysis.md) for the full analysis. Short version: even Anthropic ships a wrapper extension, not a fork, for Claude Code. The CLI is the product. The editor is a frontend.
-
-## Development
-
-```bash
-pnpm install
-pnpm watch         # esbuild watch
-pnpm typecheck
-pnpm package       # produces .vsix
-```
-
-## License
-
-MIT for the extension code. The `cmd` CLI is proprietary (© Command Code, Inc.).
+## ⚖️ License
+MIT License for the extension frontend. The `cmd` CLI is proprietary (© Command Code, Inc.).
