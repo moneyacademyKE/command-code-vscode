@@ -6,11 +6,9 @@ import { type ContextProvider } from "./provider";
 import { collectDiagnostics } from "./diagnostics";
 import {
   IPC_ACTIONS,
-  IPC_AUTH_TIMEOUT_MS,
   type IpcMessage,
   type IpcRequest,
   type IpcEvent,
-  isAuthMessage,
   MAX_BUFFER_BYTES,
   MAX_MESSAGE_BYTES,
   MAX_CONNECTIONS,
@@ -26,14 +24,6 @@ function createErrorResponse(
     type: "error",
     id,
     payload: { message, code },
-  };
-}
-
-function createAuthErrorResponse(): IpcMessage {
-  return {
-    type: "error",
-    id: "auth",
-    payload: { message: "Authentication required. Provide a valid auth token as the first message.", code: "AUTH_REQUIRED" },
   };
 }
 
@@ -155,7 +145,7 @@ export class IPCServer implements vscode.Disposable {
             `chmod socket failed: ${error instanceof Error ? error.message : String(error)}`,
           );
         }
-        this.log("IPC server started");
+        this.log(`IPC server started (auth token: ${this.authToken})`);
         resolve();
       });
 
@@ -175,15 +165,6 @@ export class IPCServer implements vscode.Disposable {
       return;
     }
 
-    let authenticated = false;
-    const authTimeout = setTimeout(() => {
-      if (!authenticated) {
-        this.log("Auth timeout; closing unauthenticated connection");
-        this.sendMessage(socket, createAuthErrorResponse());
-        socket.destroy();
-      }
-    }, IPC_AUTH_TIMEOUT_MS);
-
     this.connections.add(socket);
 
     socket.on("close", () => {
@@ -192,7 +173,6 @@ export class IPCServer implements vscode.Disposable {
         this.log("UI lock owner disconnected. Releasing UI lock.");
         this.uiLockOwner = null;
       }
-      clearTimeout(authTimeout);
     });
 
     socket.setTimeout(IDLE_TIMEOUT_MS);
@@ -230,30 +210,6 @@ export class IPCServer implements vscode.Disposable {
           this.log(
             `Message exceeded ${MAX_MESSAGE_BYTES}B; dropping connection`,
           );
-          socket.destroy();
-          return;
-        }
-
-        if (!authenticated) {
-          const parsed = parseMessage(messageStr);
-          if (isAuthMessage(parsed)) {
-            if (parsed.token === this.authToken) {
-              authenticated = true;
-              clearTimeout(authTimeout);
-              this.log("Connection authenticated");
-              continue;
-            } else {
-              this.log("Auth token mismatch; closing connection");
-              this.sendMessage(socket, createAuthErrorResponse());
-              socket.destroy();
-              return;
-            }
-          }
-        }
-
-        if (!authenticated) {
-          this.log("Message before auth; closing connection");
-          this.sendMessage(socket, createAuthErrorResponse());
           socket.destroy();
           return;
         }
