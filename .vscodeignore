@@ -5,3 +5,10 @@ scripts
 tsconfig.json
 *.vsix
 .DS_Store
+.vscode
+.clj-kondo
+.lsp
+.commandcode
+docs
+.eslintrc.json
+package-lock.json
