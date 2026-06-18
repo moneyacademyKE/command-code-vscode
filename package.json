@@ -1,0 +1,258 @@
+{
+  "name": "command-code",
+  "displayName": "Command Code",
+  "description": "A coding agent with taste. Wrap the Command Code (`cmd`) CLI as a native VS Code experience.",
+  "version": "0.1.0",
+  "publisher": "commandcode",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CommandCodeAI/command-code-vscode"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Education",
+    "Other"
+  ],
+  "keywords": [
+    "command-code",
+    "cmd",
+    "taste",
+    "ai",
+    "coding-agent",
+    "anthropic",
+    "claude",
+    "deepseek"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "assets/icon.png",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "commandcode.chat",
+        "name": "cmd",
+        "fullName": "Command Code",
+        "description": "Your coding agent with taste. Multi-model, plan mode, and continuous learning.",
+        "isDefault": true,
+        "commands": [
+          {
+            "name": "plan",
+            "description": "Plan before building"
+          },
+          {
+            "name": "review",
+            "description": "Review code or a PR"
+          },
+          {
+            "name": "taste",
+            "description": "Inspect or apply taste"
+          }
+          ,
+          {
+            "name": "learn",
+            "description": "Learn taste from a repository"
+          }
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "commandcode.viewContainer",
+          "title": "Command Code",
+          "icon": "$(circuit-board)"
+        }
+      ]
+    },
+    "views": {
+      "commandcode.viewContainer": [
+        {
+          "id": "commandcode.tasteView",
+          "name": "Taste"
+        },
+        {
+          "id": "commandcode.sessionView",
+          "name": "Sessions"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "commandcode.tasteView",
+        "contents": "No taste learned yet.\n[Learn from current repo](command:commandcode.taste.learnHere)\n[Pull taste package](command:commandcode.taste.pull)\n[Open taste docs](https://commandcode.ai/docs/taste)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "commandcode.start",
+        "title": "Start Command Code Session",
+        "shortTitle": "Start Session",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.continue",
+        "title": "Continue Last Session",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.resume",
+        "title": "Resume Past Session",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.print",
+        "title": "Run Query (Headless)",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.plan",
+        "title": "Plan Mode",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.review",
+        "title": "Review Pull Request",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.model.pick",
+        "title": "Pick Model",
+        "category": "Command Code",
+        "shortTitle": "Switch Model"
+      },
+      {
+        "command": "commandcode.permission.pick",
+        "title": "Pick Permission Mode",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.taste.openFile",
+        "title": "Open Taste File",
+        "category": "Command Code",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "commandcode.taste.push",
+        "title": "Push Taste Package",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.taste.pull",
+        "title": "Pull Taste Package",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.taste.list",
+        "title": "List Taste Packages",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.taste.lint",
+        "title": "Lint Taste Package",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.taste.learnHere",
+        "title": "Learn Taste From Current Folder",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.taste.openWeb",
+        "title": "Open Taste Profile on commandcode.ai",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.status",
+        "title": "Show Command Code Status",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.info",
+        "title": "Show System Info",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.login",
+        "title": "Login to Command Code",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.logout",
+        "title": "Logout of Command Code",
+        "category": "Command Code"
+      },
+      {
+        "command": "commandcode.update",
+        "title": "Update Command Code CLI",
+        "category": "Command Code"
+      }
+    ],
+    "configuration": {
+      "title": "Command Code",
+      "properties": {
+        "commandcode.cliPath": {
+          "type": "string",
+          "default": "cmd",
+          "description": "Path to the `cmd` CLI binary. Override if you installed Command Code to a non-standard location."
+        },
+        "commandcode.defaultModel": {
+          "type": "string",
+          "default": "",
+          "description": "Model to use by default (e.g. claude-opus-4.8, deepseek-v4-pro). Leave empty to use CLI default."
+        },
+        "commandcode.defaultPermissionMode": {
+          "type": "string",
+          "enum": ["standard", "plan", "auto-accept"],
+          "default": "standard",
+          "description": "Permission mode for new sessions."
+        },
+        "commandcode.maxTurns": {
+          "type": "number",
+          "default": 10,
+          "description": "Cap on conversation turns in headless / print mode."
+        },
+        "commandcode.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the session indicator in the status bar."
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "commandcode.print",
+          "when": "editorTextFocus",
+          "group": "commandcode"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "commandcode.print",
+          "group": "commandcode"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "package": "vsce package --no-dependencies",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.4.0"
+  }
+}
