@@ -6,7 +6,7 @@
  * and emits DOM events back.
  */
 
-// @ts-expect-error
+// @ts-expect-error acquireVsCodeApi is provided by VS Code webview
 const vscode = acquireVsCodeApi();
 
 // Minimal application state (mirrored from CLI)
@@ -58,8 +58,9 @@ function initUI() {
     if (input.value.trim()) {
       const prompt = input.value;
       vscode.postMessage({
-        type: 'chatInput',
-        payload: { prompt }
+        jsonrpc: '2.0',
+        method: 'chatInput',
+        params: { prompt }
       });
       // Optimistically update the UI so the execute button feels responsive
       appendMessage({ id: 'local-' + Date.now(), role: 'user', content: prompt });

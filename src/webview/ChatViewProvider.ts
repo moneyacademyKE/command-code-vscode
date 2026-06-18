@@ -35,7 +35,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  public dispatchEvent(eventPayload: any) {
+  public dispatchEvent(eventPayload: unknown) {
     if (this._view) {
       this._view.webview.postMessage(eventPayload);
     }

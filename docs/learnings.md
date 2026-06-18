@@ -22,3 +22,9 @@ Supporting 500+ models (via OpenRouter) introduces immense accidental complexity
 When evaluating new features to copy from competitors:
 1. Does it complect the CLI state with the Editor state? If yes, reject it or find a simple, data-driven boundary.
 2. Does it provide essential utility? If yes, how can we implement it immutably (e.g., via file system drops or standard IO)?
+
+### 4. Avoiding Incidental Complexity in the UI (SolidJS & Partytown)
+We evaluated adding SolidJS and Partytown to the VS Code Webview to handle UI rendering and offload scripts to Web Workers.
+- **The Complected Way:** Adopting a framework like SolidJS for a simple chat interface, introducing JSX compilation, Vite/Babel toolchains, and risking state moving from the CLI back into the UI. Partytown adds cross-thread DOM proxying, massive complexity for a webview that runs zero heavy 3rd-party scripts.
+- **The Simple Way:** "Thin Glass" Vanilla JS. Direct DOM updates (`document.getElementById().innerText`) are extremely fast, require zero dependencies, and enforce a stateless UI architecture by making it difficult to store complex state locally.
+- *Conclusion:* Guard against incidental complexity. Frameworks solve specific problems at scale; adopting them before reaching that scale complects the architecture for zero tangible benefit.

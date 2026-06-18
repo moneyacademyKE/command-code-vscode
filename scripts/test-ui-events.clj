@@ -1,6 +1,5 @@
 #!/usr/bin/env bb
 
-(require '[cheshire.core :as json])
 (require '[clojure.test :refer [deftest is run-tests testing]])
 
 ;; This script tests the Rich Hickey "Thin Glass" UI event payload generation.

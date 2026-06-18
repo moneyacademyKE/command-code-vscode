@@ -3,9 +3,7 @@
 ;; Rich Hickey style parallel agent simulation
 ;; Decomplecting execution from state mutation via futures and immutable values.
 
-(require '[babashka.fs :as fs]
-         '[clojure.string :as str]
-         '[clojure.java.shell :refer [sh]])
+(require '[babashka.fs :as fs])
 
 (def workspace-dir "mock-workspace")
 (def taste-file (str workspace-dir "/taste.md"))

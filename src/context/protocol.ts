@@ -30,7 +30,7 @@ export interface IpcRequest {
   payload: {
     action: string;
     filePaths?: string[];
-    eventPayload?: any;
+    eventPayload?: unknown;
   };
 }
 
