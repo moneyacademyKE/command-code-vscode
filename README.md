@@ -23,6 +23,7 @@ The unofficial extension is built as a **decoupled, feature-rich wrapper** that 
 | **Inline Diff Previews** | ❌ | ✅ | **Feature**: Intercepts code modifications and presents them via `vscode.diff()` using a custom virtual provider to preserve syntax highlighting and file editability. |
 | **Taste Sidebar TreeView** | ❌ | ✅ | **Feature**: Employs `FileSystemWatcher` for reactive reload of `.commandcode/taste/`. |
 | **Status Bar Controller** | ❌ | ✅ | **Feature**: Quick settings selector for active model, permission modes, and status. |
+| **MCP Config Generator** | ❌ | ✅ | **Feature**: Generates `mcp.json` to provision external OS capabilities dynamically. |
 | **Session History Log** | ❌ | ✅ | **Feature**: Reads active sessions and metadata straight from `~/.commandcode/projects/`. |
 | **Reactive Configuration** | ❌ | ✅ | **Robust**: Instantly updates CLI path validation and status bars on setting changes. |
 | **Test Coverage** | ❌ | ✅ | **Quality**: 38 unit tests configured with Vitest + automated GitHub Actions CI. |
@@ -38,7 +39,12 @@ In analyzing editor integrations (such as comparing Command Code with competitor
 * **Accidental Complexity (The Fork/Heavy Extension Path):** Deeply hooking into the editor's token stream or webviews to manage agent sessions (e.g. Cursor forks or Kilo Code's heavy client logic). This complects the editor lifecycle with the AI inference state.
 * **Essential Simplicity (Our Extension Wrapper Path):** Treating the editor purely as a "dumb UI frontend" and a read-only context provider. All agent state, decision loops, and `taste-1` learning reside exclusively inside the `cmd` CLI. The UDS socket separates these domains cleanly.
 
-### 2. Concurrency (Parallel Agent Orchestration)
+### 2. Composable Registries (Agent Autonomy)
+Instead of hardcoding complex OS capabilities (like File System access or Git execution) into the IDE extension, we use the Model Context Protocol (MCP).
+* **Accidental Complexity:** Writing custom scripts or wrappers in the extension layer to expose the OS to the agent.
+* **Essential Simplicity:** The extension strictly provides an `mcp.json` configuration file, composing standard **Official Reference MCP Servers** (like `@modelcontextprotocol/server-filesystem`). The headless CLI agent uses `npx -y` to dynamically provision these capabilities at runtime, requiring zero maintenance from the IDE layer.
+
+### 3. Concurrency (Parallel Agent Orchestration)
 Running multiple agents concurrently (e.g., implementing, testing, and documenting at once) is high-utility but traditionally complects state.
 * **Simple Implementation:** We treat the project's instructions and "taste" preferences as immutable values. Our parallel agent module spawns concurrent `cmd --headless` subprocesses. Each process operates independently without mutating live code, outputting proposal events that are merged or reviewed sequentially.
 
