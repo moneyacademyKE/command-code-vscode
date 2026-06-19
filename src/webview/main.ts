@@ -422,6 +422,17 @@ function setupScrollButton(container: HTMLElement): void {
 
 // ─── Footer Status Bar ────────────────────────────────
 
+function updateHeader() {
+  const mn = document.getElementById('model-name');
+  if (mn) mn.innerText = `MODEL // ${state.modelId || 'NONE'}`;
+  const pm = document.getElementById('perm-mode');
+  if (pm)
+    pm.innerText = `PERM // ${state.permissionMode || 'STANDARD'}`;
+  const tc = document.getElementById('token-count');
+  if (tc)
+    tc.innerText = `TOKENS // P ${state.tokens.prompt.toLocaleString()} / C ${state.tokens.completion.toLocaleString()} / ${state.tokens.total.toLocaleString()}`;
+}
+
 function updateFooter() {
   const el = (id: string) => document.getElementById(id);
   const fModel = el('footer-model');
@@ -570,15 +581,15 @@ function renderDiffProposalHtml(id: string, diffText: string, response?: 'accept
   `;
 }
 
-function processMessageContent(raw: string): string {
-  // If it's already HTML (images or diff widgets), return as-is
+function processMessageContentLight(raw: string): string {
+  // Fast streaming path: structural replacements only, no marked.parse()
+  // Used on every streaming chunk to avoid O(n²) re-parse
   if (raw.startsWith('<img') || raw.startsWith('<div class="diff-widget"') || raw.startsWith('<div class="code-container"')) {
     return raw;
   }
 
   let processed = raw;
 
-  // Turn <thought> blocks into expandable accordions
   processed = processed.replace(
     /<thought>([\s\S]*?)<\/thought>/gi,
     (_m: string, inner: string) => {
@@ -587,7 +598,6 @@ function processMessageContent(raw: string): string {
     },
   );
 
-  // Turn <tool_call> blocks into tool call widgets
   processed = processed.replace(
     /<tool_call>([\s\S]*?)<\/tool_call>/gi,
     (_m: string, inner: string) => {
@@ -597,7 +607,6 @@ function processMessageContent(raw: string): string {
     },
   );
 
-  // Turn <result> blocks into result widgets
   processed = processed.replace(
     /<result>([\s\S]*?)<\/result>/gi,
     (_m: string, inner: string) => {
@@ -605,7 +614,6 @@ function processMessageContent(raw: string): string {
     },
   );
 
-  // Highlight ```diff blocks
   processed = processed.replace(
     /```diff\n([\s\S]*?)```/g,
     (_m: string, inner: string) => {
@@ -625,7 +633,61 @@ function processMessageContent(raw: string): string {
     },
   );
 
-  // If nothing matched, run through marked parser
+  return processed;
+}
+
+function processMessageContent(raw: string): string {
+  // Final message path: full render including marked.parse()
+  if (raw.startsWith('<img') || raw.startsWith('<div class="diff-widget"') || raw.startsWith('<div class="code-container"')) {
+    return raw;
+  }
+
+  let processed = raw;
+
+  processed = processed.replace(
+    /<thought>([\s\S]*?)<\/thought>/gi,
+    (_m: string, inner: string) => {
+      const html = marked.parse(inner.trim()) as string;
+      return `<details class="step-accordion" open><summary>&#x1F914; Reasoning</summary><div class="thought-content">${html}</div></details>`;
+    },
+  );
+
+  processed = processed.replace(
+    /<tool_call>([\s\S]*?)<\/tool_call>/gi,
+    (_m: string, inner: string) => {
+      const nameMatch = inner.match(/name:\s*(\S+)/);
+      const toolName = nameMatch ? nameMatch[1] : 'unknown';
+      return `<div class="tool-call"><span class="tool-call-header">&#x1F527; TOOL CALL // ${escapeHtml(toolName)}</span><pre class="tool-call-body">${escapeHtml(inner)}</pre></div>`;
+    },
+  );
+
+  processed = processed.replace(
+    /<result>([\s\S]*?)<\/result>/gi,
+    (_m: string, inner: string) => {
+      return `<div class="tool-result"><span class="tool-call-header">&#x1F4CB; RESULT</span><pre class="tool-call-body">${escapeHtml(inner)}</pre></div>`;
+    },
+  );
+
+  processed = processed.replace(
+    /```diff\n([\s\S]*?)```/g,
+    (_m: string, inner: string) => {
+      const lines = inner.split('\n');
+      const formatted = lines
+        .map((line) => {
+          if (line.startsWith('+'))
+            return `<span class="diff-line add">${escapeHtml(line)}</span>`;
+          if (line.startsWith('-'))
+            return `<span class="diff-line sub">${escapeHtml(line)}</span>`;
+          if (line.startsWith('@@'))
+            return `<span class="diff-line hunks">${escapeHtml(line)}</span>`;
+          return escapeHtml(line);
+        })
+        .join('\n');
+      return `<pre class="diff-block">${formatted}</pre>`;
+    },
+  );
+
+  // Only do full marked.parse() at completion — never during streaming
   if (processed === raw) {
     processed = marked.parse(raw) as string;
   }
@@ -635,7 +697,7 @@ function processMessageContent(raw: string): string {
 
 // ─── Message Rendering ────────────────────────────────
 
-function appendMessage(m: { id: string; role: string; content: string }) {
+function appendMessage(m: { id: string; role: string; content: string }, streaming?: boolean) {
   const history = document.getElementById('chat-history');
   if (!history) return;
   switchPanel('chat');
@@ -649,7 +711,7 @@ function appendMessage(m: { id: string; role: string; content: string }) {
 
   let parsedContent: string;
   try {
-    parsedContent = processMessageContent(m.content);
+    parsedContent = streaming ? processMessageContentLight(m.content) : processMessageContent(m.content);
   } catch {
     parsedContent = `<pre>${escapeHtml(m.content)}</pre>`;
   }
@@ -794,6 +856,10 @@ function hydrateUI() {
   if (state.agents && state.agents.length > 0) {
     renderAgentList(state.agents);
   }
+
+  updateHeader();
+  updateFooter();
+  updateContextPanel();
 }
 
 function attachEventListeners() {
@@ -1271,9 +1337,7 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'UpdateTokens': {
         state.tokens = payload;
         saveState();
-        const tc = document.getElementById('token-count');
-        if (tc)
-          tc.innerText = `TOKENS // P ${state.tokens.prompt.toLocaleString()} / C ${state.tokens.completion.toLocaleString()} / ${state.tokens.total.toLocaleString()}`;
+        updateHeader();
         updateFooter();
         break;
       }
@@ -1303,23 +1367,24 @@ window.addEventListener('message', (event: MessageEvent) => {
         div.dataset.raw += chunk;
 
         const raw = div.dataset.raw ?? '';
-        let parsedContent: string;
-        try {
-          parsedContent = processMessageContent(raw);
-        } catch {
-          parsedContent = `<pre>${escapeHtml(raw)}</pre>`;
-        }
-
-        div.innerHTML = `<span class="message-role">${role}</span><div class="message-content">${parsedContent}</div>`;
-        if (isNearBottom(history)) scrollToBottom(history);
-
-        // Update state
+        // Light path: structural replacements only, no marked.parse()
+        appendMessage({ id, role, content: raw }, true);
         addOrUpdateMessage({ id, role, content: raw, raw });
         break;
       }
 
       case 'StreamFinished': {
         setExecutingState(false);
+        // Final full render: re-render streaming messages with marked.parse()
+        // so the user sees fully formatted markdown at completion
+        const { id } = payload as { id: string };
+        if (id) {
+          const msg = state.messages.find(m => m.id === id);
+          if (msg) {
+            appendMessage({ id: msg.id, role: msg.role, content: msg.content || msg.raw || '' }, false);
+            addOrUpdateMessage({ id: msg.id, role: msg.role, content: msg.content || msg.raw || '' });
+          }
+        }
         break;
       }
 
@@ -1354,15 +1419,7 @@ window.addEventListener('message', (event: MessageEvent) => {
         state.currentSessionId = sessionId ?? null;
         state.turnCount = turnCount ?? 0;
         saveState();
-
-        const mn = document.getElementById('model-name');
-        if (mn) mn.innerText = `MODEL // ${state.modelId || 'NONE'}`;
-        const pm = document.getElementById('perm-mode');
-        if (pm)
-          pm.innerText = `PERM // ${state.permissionMode || 'STANDARD'}`;
-        const tc = document.getElementById('token-count');
-        if (tc)
-          tc.innerText = `TOKENS // P ${state.tokens.prompt.toLocaleString()} / C ${state.tokens.completion.toLocaleString()} / ${state.tokens.total.toLocaleString()}`;
+        updateHeader();
         updateFooter();
         break;
       }
@@ -1370,9 +1427,7 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'permChanged': {
         state.permissionMode = payload.permissionMode;
         saveState();
-        const pm = document.getElementById('perm-mode');
-        if (pm)
-          pm.innerText = `PERM // ${state.permissionMode || 'STANDARD'}`;
+        updateHeader();
         updateFooter();
         break;
       }
@@ -1381,8 +1436,7 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'ModelChanged': {
         state.modelId = payload.modelId;
         saveState();
-        const mn = document.getElementById('model-name');
-        if (mn) mn.innerText = `MODEL // ${state.modelId || 'NONE'}`;
+        updateHeader();
         updateFooter();
         break;
       }
