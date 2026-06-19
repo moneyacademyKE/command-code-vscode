@@ -9,10 +9,10 @@ Through the lens of Rich Hickey's "Simple Made Easy" philosophy, we analyze two 
 
 ## Feature Set Differences
 
-| Defect Category | Current Implementation | Proposed Architecture (Hickey-Compliant) |
+| Defect Category | Legacy Implementation (Defective) | Current Architecture (Hickey-Compliant) |
 | :--- | :--- | :--- |
-| **DOM State Management** | `app.innerHTML = ...` obliterates the DOM on every `UpdateTokens` event. | Targeted DOM mutations. The chat input (`textarea`) retains its identity and is decoupled from temporal token updates. |
-| **IPC Lock Acquisition** | Server rigidly drops UI events if `CLAIM_UI_LOCK` isn't explicitly received first. | Implicit Lock Inference: If a socket emits `DISPATCH_WEBVIEW_EVENT`, it unambiguously proves it is the active UI controller and is granted the lock. |
+| **DOM State Management** | `app.innerHTML = ...` obliterated the DOM on every `UpdateTokens` event. | Targeted DOM mutations. The chat input (`textarea`) retains its identity and is decoupled from temporal token updates. |
+| **IPC Lock Acquisition** | Server rigidly dropped UI events if `CLAIM_UI_LOCK` wasn't explicitly received first. | Implicit Lock Inference: If a socket emits `DISPATCH_WEBVIEW_EVENT`, it unambiguously proves it is the active UI controller and is granted the lock. |
 | **Webview Event Listeners** | Destroyed and recreated constantly, leading to detached nodes and lost keystrokes. | Initialized once. Immutable attachment of events. |
 
 ## Explaining the Differences
@@ -51,7 +51,8 @@ Through the lens of Rich Hickey's "Simple Made Easy" philosophy, we analyze two 
 2. **Uncomplect the UI (Webview)**: Refactor `src/webview/main.ts`. Separate the initial structural rendering from state updates. Create dedicated functions: `updateTokens()`, `appendMessage()`, and `updateModel()`.
 3. **Preserve Input Identity**: Ensure the `<textarea>` and its event listeners are created exactly once during initialization.
 
-## Next Actions for Implementation
-- Open `ipc-server.ts` and add implicit lock claiming.
-- Refactor `main.ts` to use targeted DOM updates.
-- Write/update Babashka tests if necessary to verify event lock inference.
+## Completed Implementation Actions
+- ✅ Fixed the Deadlock in `ipc-server.ts` by implicitly assigning the lock when `DISPATCH_WEBVIEW_EVENT` is received.
+- ✅ Refactored `main.ts` to use targeted DOM updates, protecting user input during stream updates.
+- ✅ Preserved Input Identity by ensuring the `<textarea>` and event listeners are initialized only once.
+- ✅ Fixed ESLint block scoping (`no-case-declarations`) for targeted reducer updates in `switch` statements.
