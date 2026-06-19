@@ -213,6 +213,30 @@
         "command": "cmd-lite.agents.parallel",
         "title": "Run Parallel Agents",
         "category": "Command Code"
+      },
+      {
+        "command": "cmd-lite.session.exportMarkdown",
+        "title": "Export Session as Markdown",
+        "category": "Command Code",
+        "icon": "$(export)"
+      },
+      {
+        "command": "cmd-lite.diff.acceptAll",
+        "title": "Accept All Changes",
+        "category": "Command Code",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "cmd-lite.diff.rejectAll",
+        "title": "Reject All Changes",
+        "category": "Command Code",
+        "icon": "$(close-all)"
+      },
+      {
+        "command": "cmd-lite.checkpoint.restore",
+        "title": "Restore Last Checkpoint",
+        "category": "Command Code",
+        "icon": "$(discard)"
       }
     ],
     "configuration": {
@@ -453,6 +477,13 @@
           "command": "cmd-lite.print",
           "group": "cmd-lite"
         }
+      ],
+      "view/item/context": [
+        {
+          "command": "cmd-lite.session.exportMarkdown",
+          "when": "view == cmd-lite.sessionView && viewItem == session",
+          "group": "inline"
+        }
       ]
     },
     "keybindings": [
@@ -493,5 +524,8 @@
     "eslint": "^8.57.0",
     "typescript": "^5.4.0",
     "vitest": "^4.1.9"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
   }
 }

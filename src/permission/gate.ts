@@ -5,6 +5,8 @@ export interface PermissionRequest {
   description: string;
   filePaths?: string[];
   category: "file-read" | "file-write" | "shell" | "network" | "other";
+  /** Optional key for persisting allow-always/deny-always choices. */
+  key?: string;
 }
 
 export type PermissionChoice = "allow-once" | "allow-always" | "deny-once" | "deny-always";

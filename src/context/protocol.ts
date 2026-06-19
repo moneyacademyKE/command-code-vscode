@@ -3,6 +3,8 @@ export const IPC_ACTIONS = {
   GET_DIAGNOSTICS: "getDiagnostics",
   DISPATCH_WEBVIEW_EVENT: "dispatchWebviewEvent",
   CLAIM_UI_LOCK: "claimUiLock",
+  APPLY_EDIT: "applyEdit",
+  OPEN_FILE: "openFile",
 } as const;
 
 export const IPC_AUTH_TIMEOUT_MS = 5000;
@@ -31,6 +33,8 @@ export interface IpcRequest {
     action: string;
     filePaths?: string[];
     eventPayload?: unknown;
+    editPayload?: unknown; // generic object for VS Code workspace edit
+    filePath?: string; // for openFile action
   };
 }
 

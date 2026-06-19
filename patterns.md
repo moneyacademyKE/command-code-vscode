@@ -53,3 +53,14 @@
 ### Switch Case Block Scoping Pattern
 - **Context**: When building Redux-style reducers or handling JSON-RPC dispatch events in `switch` statements, developers often need to declare variables (`const`, `let`) local to a specific `case`.
 - **Solution**: Always wrap `case` clauses containing lexical declarations in block scopes `{}`. This satisfies `no-case-declarations` lint rules, prevents variable hoisting bugs across cases, and keeps the code clean without disabling linting.
+## Standardized Editor Protocol Pattern (MCP)
+- **Context**: Extension wrappers often need to expose IDE capabilities (Terminal execution, Window prompts, File Search) to the CLI agent. Building custom JSON-RPC events for every IDE capability quickly complects the Context IPC server.
+- **Solution**: Run a native Model Context Protocol (MCP) Server inside the extension. Standardizing the interface means the `cmd` CLI can discover and execute IDE tools dynamically without requiring custom, tightly-coupled event handlers on both ends.
+
+### Decomplecting Stream Observation Pattern
+- **Context**: Tailing a continuous stdout stream into a chat interface creates massive UI churn and pollutes semantic messaging history.
+- **Solution**: Treat structural UI events (`RenderMessage`) and continuous streaming data (`StdoutChunk`) as completely separate pipelines. Route continuous streams to dedicated log buffers (like a `<pre>` status pane), ensuring observability without tangling with primary business state logic.
+
+### Universal Scripting Pattern
+- **Context**: Using heterogeneous languages (Python, Bash, JS) for simple build tasks creates environment entropy and runtime dependency hell.
+- **Solution**: Adopt Babashka (`bb.edn`) for all repository scripting. This enforces a fast, unified, and dependency-free Clojure runtime that embraces "Simple Made Easy."

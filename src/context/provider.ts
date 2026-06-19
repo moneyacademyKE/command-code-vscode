@@ -211,6 +211,40 @@ export class ContextProvider implements vscode.Disposable {
     return deduplicateFiles(files);
   }
 
+  async openFile(filePath: string): Promise<boolean> {
+    try {
+      const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+      await vscode.window.showTextDocument(doc);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async applyEdit(editPayload: any): Promise<boolean> {
+    if (!editPayload || typeof editPayload !== "object") return false;
+    try {
+      const workspaceEdit = new vscode.WorkspaceEdit();
+      
+      // Attempt to parse a standard { "file:///path": [{ range: [{line, character}, {line, character}], newText: "..." }] }
+      for (const [uriStr, edits] of Object.entries(editPayload)) {
+        const uri = vscode.Uri.parse(uriStr);
+        if (Array.isArray(edits)) {
+          for (const edit of edits) {
+            if (edit.range && typeof edit.newText === "string") {
+              const start = new vscode.Position(edit.range[0].line, edit.range[0].character);
+              const end = new vscode.Position(edit.range[1].line, edit.range[1].character);
+              workspaceEdit.replace(uri, new vscode.Range(start, end), edit.newText);
+            }
+          }
+        }
+      }
+      return await vscode.workspace.applyEdit(workspaceEdit);
+    } catch {
+      return false;
+    }
+  }
+
   dispose(): void {
     this.disposables.forEach((d) => d.dispose());
   }

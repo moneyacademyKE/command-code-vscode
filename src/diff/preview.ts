@@ -14,6 +14,10 @@ export class ProposedDiffContentProvider implements vscode.TextDocumentContentPr
     this._onDidChange.fire(uri);
   }
 
+  clear() {
+    this.contentMap.clear();
+  }
+
   provideTextDocumentContent(uri: vscode.Uri): string {
     return this.contentMap.get(uri.toString()) ?? "";
   }
@@ -133,4 +137,109 @@ export function extractFirstDiffFile(
   if (!b.filePath) return null;
 
   return { filePath: b.filePath, content: b.content };
+}
+
+// --- Streaming diff support (plan mode) ---
+
+export class StreamingDiffManager {
+  private buffer = "";
+  private knownBlocks = new Map<string, string>();
+
+  /** Feed a chunk of stdout and update the proposed diff provider if new code blocks appear. */
+  feed(chunk: string): void {
+    this.buffer += chunk;
+    const blocks = parseCodeBlocks(this.buffer);
+
+    for (const block of blocks) {
+      if (!block.filePath) continue;
+      const key = block.filePath;
+      const existing = this.knownBlocks.get(key);
+      // Only update if content is new or longer (streaming in progress)
+      if (existing !== block.content && block.content.length > (existing?.length ?? 0)) {
+        this.knownBlocks.set(key, block.content);
+        const uri = vscode.Uri.file(key);
+
+        // Check if original file exists
+        if (fs.existsSync(uri.fsPath)) {
+          const virtualUri = vscode.Uri.parse(`cmd-lite-diff://proposed${uri.path}`);
+          proposedDiffProvider.updateContent(virtualUri, block.content);
+        }
+      }
+    }
+  }
+
+  getBlocks(): Map<string, string> {
+    return new Map(this.knownBlocks);
+  }
+
+  hasBlocks(): boolean {
+    return this.knownBlocks.size > 0;
+  }
+
+  clear(): void {
+    this.buffer = "";
+    this.knownBlocks.clear();
+  }
+}
+
+/** Apply all proposed file changes to the workspace. */
+export async function acceptDiffProposals(diffManager: StreamingDiffManager): Promise<void> {
+  const edits = new Map<string, string>();
+  for (const [filePath, content] of diffManager.getBlocks()) {
+    edits.set(filePath, content);
+  }
+
+  if (edits.size === 0) {
+    vscode.window.showInformationMessage("No proposed changes to apply.");
+    return;
+  }
+
+  for (const [filePath, content] of edits) {
+    const uri = vscode.Uri.file(filePath);
+    try {
+      // Ensure the file exists
+      if (!fs.existsSync(uri.fsPath)) {
+        fs.mkdirSync(path.dirname(uri.fsPath), { recursive: true });
+        fs.writeFileSync(uri.fsPath, content, "utf-8");
+        continue;
+      }
+
+      const document = await vscode.workspace.openTextDocument(uri);
+      const fullRange = new vscode.Range(
+        document.positionAt(0),
+        document.positionAt(document.getText().length),
+      );
+      const edit = new vscode.WorkspaceEdit();
+      edit.replace(uri, fullRange, content);
+      await vscode.workspace.applyEdit(edit);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      vscode.window.showErrorMessage(`Failed to apply changes to ${path.basename(filePath)}: ${message}`);
+    }
+  }
+
+  vscode.window.showInformationMessage(
+    `Applied changes to ${edits.size} file${edits.size > 1 ? "s" : ""}.`,
+  );
+  diffManager.clear();
+  proposedDiffProvider.clear();
+}
+
+/** Reject all proposed changes — clear the diff provider. */
+export function rejectDiffProposals(diffManager: StreamingDiffManager): void {
+  diffManager.clear();
+  proposedDiffProvider.clear();
+  vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+}
+
+// --- Current diff manager sharing ---
+
+let _currentDiffManager: StreamingDiffManager | null = null;
+
+export function setCurrentDiffManager(mgr: StreamingDiffManager | null): void {
+  _currentDiffManager = mgr;
+}
+
+export function getCurrentDiffManager(): StreamingDiffManager | null {
+  return _currentDiffManager;
 }

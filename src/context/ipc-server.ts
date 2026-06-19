@@ -153,6 +153,7 @@ export class IPCServer implements vscode.Disposable {
         if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
           this.log(`EADDRINUSE on ${this.socketPath}; removing and retrying...`);
           this.server?.close();
+          // Remove stale socket file and retry once
           try {
             fs.unlinkSync(this.socketPath);
           } catch {
@@ -310,6 +311,23 @@ export class IPCServer implements vscode.Disposable {
           this.webviewDispatcher(request.payload.eventPayload);
         }
         const response = createContextResponse(request.id, { success: true });
+        this.sendMessage(socket, response);
+        return;
+      }
+
+      if (action === IPC_ACTIONS.APPLY_EDIT) {
+        const success = await this.contextProvider.applyEdit(request.payload.editPayload);
+        const response = createContextResponse(request.id, { success });
+        this.sendMessage(socket, response);
+        return;
+      }
+
+      if (action === IPC_ACTIONS.OPEN_FILE) {
+        if (!request.payload.filePath) {
+          throw new Error("filePath is required for OPEN_FILE action");
+        }
+        const success = await this.contextProvider.openFile(request.payload.filePath);
+        const response = createContextResponse(request.id, { success });
         this.sendMessage(socket, response);
         return;
       }

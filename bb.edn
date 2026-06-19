@@ -1,0 +1,9 @@
+{:paths ["scripts"]
+ :tasks
+ {:requires ([babashka.process :as p])
+  test {:doc "Run tests"
+        :task (p/exec "npm run test")}
+  lint {:doc "Run linter"
+        :task (p/exec "npm run lint")}
+  build {:doc "Compile extension"
+         :task (p/exec "npm run build")}}}

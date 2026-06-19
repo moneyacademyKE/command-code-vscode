@@ -1,9 +1,11 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
 import * as vscode from "vscode";
 import { runPrint } from "../cli/commands";
 import type { PermissionMode } from "../cli/types";
 import { getActiveCwd, getEffectivePermissionMode, getEffectiveModel, getEffectiveMaxTurns } from "../config";
 import { markdownFromCli } from "./format";
-import { hasCodeProposal } from "../diff/preview";
+import { hasCodeProposal, StreamingDiffManager, setCurrentDiffManager } from "../diff/preview";
 
 interface ParticipantState {
   permissionMode: PermissionMode;
@@ -25,8 +27,13 @@ export function registerChatParticipant(context: vscode.ExtensionContext): void 
       const state = readState();
       const command = request.command;
       const prompt = buildPrompt(request, state, command);
+      const isPlanMode = state.planMode || command === "plan";
 
       stream.progress(`Running cmd -p ${summarize(prompt)}…`);
+
+      // Create streaming diff manager for plan mode
+      const diffManager = new StreamingDiffManager();
+      setCurrentDiffManager(diffManager);
 
       try {
         const abortController = new AbortController();
@@ -37,9 +44,12 @@ export function registerChatParticipant(context: vscode.ExtensionContext): void 
           model: state.model ?? getEffectiveModel(),
           maxTurns: getEffectiveMaxTurns(),
           permissionMode: state.permissionMode ?? getEffectivePermissionMode(),
-          plan: state.planMode || command === "plan",
+          plan: isPlanMode,
           onStdoutChunk: (chunk: string) => {
             stream.markdown(markdownFromCli(chunk));
+            if (isPlanMode) {
+              diffManager.feed(chunk);
+            }
           },
           timeoutMs: 0,
         });
@@ -55,7 +65,16 @@ export function registerChatParticipant(context: vscode.ExtensionContext): void 
           );
         }
 
-        if (hasCodeProposal(result.stdout)) {
+        if (diffManager.hasBlocks()) {
+          stream.button({
+            command: "cmd-lite.diff.acceptAll",
+            title: "✅ Accept All",
+          });
+          stream.button({
+            command: "cmd-lite.diff.rejectAll",
+            title: "❌ Reject All",
+          });
+        } else if (hasCodeProposal(result.stdout)) {
           stream.button({
             command: "cmd-lite.diff.show",
             title: "📊 Show Diff",
@@ -65,6 +84,7 @@ export function registerChatParticipant(context: vscode.ExtensionContext): void 
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         stream.markdown(`\n\n**Error:** ${escape(message)}\n`);
+        setCurrentDiffManager(null);
       }
 
       updateState(state);
@@ -185,7 +205,16 @@ function formatReferences(refs: readonly vscode.ChatPromptReference[]): string {
     const id = ref.id;
     const value = ref.value;
     if (value instanceof vscode.Uri) {
-      lines.push(`Reference: ${value.fsPath} (id: ${id})`);
+      try {
+        const maxLen = vscode.workspace
+          .getConfiguration("cmd-lite")
+          .get<number>("context.maxSelectionLength", 10000);
+        const content = fs.readFileSync(value.fsPath, "utf-8").slice(0, maxLen);
+        const ext = path.extname(value.fsPath).slice(1);
+        lines.push(`File: ${value.fsPath}\n\`\`\`${ext}\n${content}\n\`\`\``);
+      } catch {
+        lines.push(`Reference: ${value.fsPath} (id: ${id})`);
+      }
     } else if (typeof value === "string") {
       lines.push(`Reference: ${value} (id: ${id})`);
     }

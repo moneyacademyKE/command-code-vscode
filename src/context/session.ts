@@ -45,6 +45,7 @@ export function getSocketPath(
 export function writeSessionFile(
   sessionId: string,
   socketPath: string,
+  mcpSocketPath: string,
   workspaceFolders: string[],
   ideName: string,
   authToken: string,
@@ -59,6 +60,7 @@ export function writeSessionFile(
 
   const data = {
     socketPath,
+    mcpSocketPath,
     workspaceFolders,
     pid: process.pid,
     ideName,

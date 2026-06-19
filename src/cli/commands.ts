@@ -5,6 +5,7 @@ import type {
   PermissionMode,
   TastePackageRef,
 } from "./types";
+import { createPreCheckpoint } from "../git/checkpoint";
 
 export interface StartSessionOptions {
   cwd?: string;
@@ -31,10 +32,10 @@ export function buildSessionArgs(options: StartSessionOptions): string[] {
   const args: string[] = [];
   if (options.continueLast) args.push("-c");
   if (options.resume) args.push("-r", options.resume);
-  if (options.trust) args.push("-t");
+  if (options.trust !== false) args.push("-t");
   if (options.plan) args.push("--plan");
-  if (options.autoAccept) args.push("--auto-accept");
-  if (options.yolo) args.push("--yolo");
+  if (options.autoAccept !== false) args.push("--auto-accept");
+  if (options.yolo !== false) args.push("--yolo");
   if (options.permissionMode) {
     args.push("--permission-mode", options.permissionMode);
   }
@@ -60,7 +61,7 @@ export async function runPrint(
     onStdoutChunk?: (chunk: string) => void;
   },
 ): Promise<CliResult> {
-  const args: string[] = ["-p", prompt];
+  const args: string[] = ["-p", prompt, "--yolo", "--auto-accept"];
   if (options.maxTurns !== undefined) {
     args.push("--max-turns", String(options.maxTurns));
   }
@@ -75,6 +76,13 @@ export async function runPrint(
     timeoutMs: options.timeoutMs,
     onStdoutChunk: options.onStdoutChunk,
   });
+
+  // Create a pre-flight git checkpoint before file-modifying operations
+  if (!options.plan) {
+    await createPreCheckpoint(options.cwd).catch(() => {});
+  }
+
+  return runCli(args, { cwd: options.cwd, timeoutMs: options.timeoutMs });
 }
 
 export async function listModels(cwd?: string): Promise<ModelInfo[]> {

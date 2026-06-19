@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as vscode from "vscode";
 import {
   getInfo,
@@ -11,7 +12,7 @@ import { getActiveCwd } from "../config";
 import { resolveCliPath } from "../cli/resolve";
 import { startInteractiveSession } from "../permission/interactive";
 import type { StatusBar } from "./statusBar";
-import type { SessionTreeProvider } from "./sessionView";
+import type { SessionTreeProvider, SessionTreeItem } from "./sessionView";
 
 export function registerSessionCommands(
   context: vscode.ExtensionContext,
@@ -32,16 +33,18 @@ export function registerSessionCommands(
       startInteractiveSession(extUri, { cwd, continueLast: true, trust: true });
     }),
 
-    vscode.commands.registerCommand("cmd-lite.resume", async () => {
+    vscode.commands.registerCommand("cmd-lite.resume", async (sessionId?: string) => {
       const cwd = getActiveCwd();
-      const name = await vscode.window.showInputBox({
-        prompt: "Resume which session?",
-        placeHolder: "session name or id (blank to pick from history)",
-      });
-      if (name !== undefined) {
+      const id =
+        sessionId ??
+        (await vscode.window.showInputBox({
+          prompt: "Resume which session?",
+          placeHolder: "session name or id (blank to pick from history)",
+        }));
+      if (id) {
         startInteractiveSession(extUri, {
           cwd,
-          resume: name.trim() || undefined,
+          resume: id.trim() || undefined,
           trust: true,
         });
       }
@@ -157,6 +160,50 @@ export function registerSessionCommands(
     vscode.commands.registerCommand("cmd-lite.whoami", async () => {
       const who = await whoami(getActiveCwd());
       vscode.window.showInformationMessage(`Command Code: ${who}`);
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("cmd-lite.session.exportMarkdown", async (item?: SessionTreeItem) => {
+      const jsonlPath = item?.session?.jsonlPath;
+      if (!jsonlPath || !fs.existsSync(jsonlPath)) {
+        vscode.window.showErrorMessage("Session file not found.");
+        return;
+      }
+
+      try {
+        const raw = fs.readFileSync(jsonlPath, "utf-8");
+        const lines = raw.split(/\r?\n/).filter((l) => l.trim());
+        const turns: string[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          try {
+            const parsed = JSON.parse(lines[i]);
+            const role = parsed.role ?? "unknown";
+            const content = parsed.content ?? parsed.text ?? "";
+            turns.push(`## Turn ${i + 1} (${role})\n\n${content.trim()}\n`);
+          } catch {
+            turns.push(`## Turn ${i + 1}\n\n\`\`\`\n${lines[i]}\n\`\`\`\n`);
+          }
+        }
+
+        const markdown = turns.join("\n---\n\n");
+        const title = item.session.label.length > 40
+          ? item.session.label.slice(0, 37) + "…"
+          : item.session.label;
+        const doc = await vscode.workspace.openTextDocument({
+          content: markdown,
+          language: "markdown",
+        });
+        await vscode.window.showTextDocument(doc, { preview: false });
+        void vscode.window.setStatusBarMessage(
+          `Exported session: ${title}`,
+          3000,
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Failed to export session: ${message}`);
+      }
     }),
   );
 }

@@ -36,13 +36,19 @@ import {
   cleanupStaleSockets,
 } from "./context/session";
 import { registerLmTools } from "./tools/lm-tools";
-import { showInlineDiff, extractFirstDiffFile, proposedDiffProvider } from "./diff/preview";
+import { showInlineDiff, extractFirstDiffFile, proposedDiffProvider, acceptDiffProposals, rejectDiffProposals, getCurrentDiffManager } from "./diff/preview";
 import { runPrint, getStatus } from "./cli/commands";
+import { listSessions } from "./ui/sessionView";
 import { runParallel, formatParallelResults, type AgentTask } from "./agents/orchestrator";
+import { initializePermissionStore } from "./permission/store";
+import { restoreLastCheckpoint } from "./git/checkpoint";
+import { CmdMcpServer } from "./mcp/server";
+import { terminalTool } from "./mcp/tools/terminal";
 
 let currentSessionId: string | null = null;
 let currentIdeName: string | null = null;
 let ipcServer: IPCServer | null = null;
+let mcpServer: CmdMcpServer | null = null;
 
 async function handleWebviewAction(
   msg: { type: "action"; action: string; payload?: Record<string, unknown> },
@@ -182,11 +188,9 @@ export function activate(context: vscode.ExtensionContext): void {
                 jsonrpc: "2.0",
                 method: "webview/dispatchEvent",
                 params: {
-                  type: "RenderMessage",
+                  type: "StdoutChunk",
                   payload: {
-                    id: `agent-${Date.now()}`,
-                    role: "agent",
-                    content: chunk,
+                    chunk: chunk,
                   },
                 },
               });
@@ -295,6 +299,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   registerTasteWatcher(context, tasteProvider);
   registerTasteCommands(context, tasteProvider, outputChannel);
+  initializePermissionStore(context);
   registerSessionCommands(context, statusBar, sessionProvider, outputChannel);
   registerChatParticipant(context);
   registerLmTools(context);
@@ -317,6 +322,23 @@ export function activate(context: vscode.ExtensionContext): void {
         showInlineDiff(diff.filePath, diff.content, "Command Code Proposal");
       } else {
         vscode.window.showInformationMessage("No code changes found in the output.");
+      }
+    }),
+    vscode.commands.registerCommand("cmd-lite.diff.acceptAll", () => {
+      const mgr = getCurrentDiffManager();
+      if (mgr) acceptDiffProposals(mgr);
+    }),
+    vscode.commands.registerCommand("cmd-lite.diff.rejectAll", () => {
+      const mgr = getCurrentDiffManager();
+      if (mgr) rejectDiffProposals(mgr);
+    }),
+    vscode.commands.registerCommand("cmd-lite.checkpoint.restore", async () => {
+      const cwd = getActiveCwd();
+      const ok = await restoreLastCheckpoint(cwd);
+      if (ok) {
+        vscode.window.showInformationMessage("Restored pre-run file state from git stash.");
+      } else {
+        vscode.window.showInformationMessage("No cmd-lite checkpoint to restore.");
       }
     }),
     vscode.commands.registerCommand("cmd-lite.agents.parallel", async () => {
@@ -420,9 +442,11 @@ export function activate(context: vscode.ExtensionContext): void {
   const ideName = detectIdeName();
   currentIdeName = ideName;
   const socketPath = getSocketPath(sessionId, ideName);
+  const mcpSocketPath = getSocketPath(sessionId + "-mcp", ideName);
   const authToken = crypto.randomUUID();
 
   cleanupSocket(socketPath);
+  cleanupSocket(mcpSocketPath);
   cleanupStaleSockets(ideName);
 
   const contextProvider = new ContextProvider();
@@ -431,6 +455,9 @@ export function activate(context: vscode.ExtensionContext): void {
   ipcServer.setWebviewDispatcher((eventPayload) => {
     chatProvider.dispatchEvent(eventPayload);
   });
+
+  mcpServer = new CmdMcpServer(mcpSocketPath, [terminalTool]);
+  mcpServer.start();
 
   ipcServer.start()
     .then(() => {
@@ -443,6 +470,7 @@ export function activate(context: vscode.ExtensionContext): void {
         writeSessionFile(
           sessionId,
           socketPath,
+          mcpSocketPath,
           workspaceFolders,
           ideName,
           authToken,
@@ -473,4 +501,5 @@ export function deactivate(): void {
     removeSessionFile(currentSessionId, currentIdeName);
   }
   ipcServer?.dispose();
+  mcpServer?.stop();
 }

@@ -278,6 +278,7 @@ button:hover::before {
   display: flex;
 }
 
+/* Panel Header */
 .panel-header {
   display: flex;
   justify-content: space-between;
@@ -388,7 +389,7 @@ button:hover::before {
 .status-content::-webkit-scrollbar-track { background: var(--bg-color); }
 .status-content::-webkit-scrollbar-thumb { background: var(--border-color); }
 
-/* Chat in panel layout */
+/* Chat history now inside panel */
 .chat-history {
   flex: 1;
   overflow-y: auto;
@@ -398,6 +399,7 @@ button:hover::before {
   gap: 15px;
 }
 
+/* Adjust existing styles for panel layout */
 .chat-input-container {
   padding: 12px 20px;
   border-top: 2px solid var(--border-color);

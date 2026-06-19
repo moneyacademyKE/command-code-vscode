@@ -14,17 +14,16 @@ interface SessionItem {
   startedAt?: number;
 }
 
-const state: {
-  messages: Array<{ id: string; role: string; content: string }>;
-  tokens: { prompt: number; completion: number; total: number };
-  modelId: string;
-  sessions: SessionItem[];
-} = {
-  messages: [],
+// Minimal application state (mirrored from CLI)
+const state = {
+  messages: [] as Array<{ id: string, role: string, content: string }>,
   tokens: { prompt: 0, completion: 0, total: 0 },
   modelId: '',
-  sessions: [],
+  sessions: [] as SessionItem[],
+  statusText: '',
 };
+
+// Track which panel is visible
 
 function sendAction(action: string, payload?: Record<string, unknown>) {
   vscode.postMessage({ type: 'action', action, payload });
@@ -89,17 +88,23 @@ function initUI() {
 }
 
 function attachEventListeners() {
+  // Action buttons
   document.querySelectorAll('.action-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = (btn as HTMLElement).dataset.action;
       if (action) {
-        if (action === 'list-sessions') sendAction('list-sessions');
-        else if (action === 'show-status') sendAction('show-status');
-        else sendAction(action);
+        if (action === 'list-sessions') {
+          sendAction('list-sessions');
+        } else if (action === 'show-status') {
+          sendAction('show-status');
+        } else {
+          sendAction(action);
+        }
       }
     });
   });
 
+  // Panel close buttons
   document.querySelectorAll('.panel-close').forEach(btn => {
     btn.addEventListener('click', () => {
       const panel = (btn as HTMLElement).dataset.panel;
@@ -107,21 +112,27 @@ function attachEventListeners() {
     });
   });
 
-  document.getElementById('session-list')?.addEventListener('click', (e) => {
+  // Session list click delegation
+  const sessionList = document.getElementById('session-list');
+  sessionList?.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     const item = target.closest('.session-item') as HTMLElement;
-    if (item?.dataset.sessionId) {
+    if (item && item.dataset.sessionId) {
       sendAction('resume-session', { sessionId: item.dataset.sessionId });
     }
   });
 
+  // Chat input
   const input = document.getElementById('chat-input') as HTMLTextAreaElement;
   const sendBtn = document.getElementById('send-btn');
 
   const sendMessage = () => {
     if (input.value.trim()) {
       const prompt = input.value;
-      vscode.postMessage({ type: 'chatInput', payload: { prompt } });
+      vscode.postMessage({
+        type: 'chatInput',
+        payload: { prompt }
+      });
       appendMessage({ id: 'local-' + Date.now(), role: 'user', content: prompt });
       input.value = '';
     }
@@ -137,12 +148,13 @@ function attachEventListeners() {
 }
 
 function switchPanel(panel: 'chat' | 'sessions' | 'status') {
+  activePanel = panel;
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('panel-active'));
   const target = document.getElementById(`${panel}-panel`);
   if (target) target.classList.add('panel-active');
 }
 
-function appendMessage(m: { id: string; role: string; content: string }) {
+function appendMessage(m: { id: string, role: string, content: string }) {
   const history = document.getElementById('chat-history');
   if (!history) return;
   switchPanel('chat');
@@ -173,10 +185,10 @@ function renderSessionList(sessions: SessionItem[]) {
 }
 
 function renderStatus(text: string) {
-  const el = document.getElementById('status-content');
-  if (!el) return;
+  const content = document.getElementById('status-content');
+  if (!content) return;
   switchPanel('status');
-  el.textContent = text;
+  content.textContent = text;
 }
 
 function escapeHtml(text: string): string {
@@ -185,6 +197,7 @@ function escapeHtml(text: string): string {
   return div.innerHTML;
 }
 
+// Listen for JSON-RPC payloads from the extension
 window.addEventListener('message', (event: MessageEvent) => {
   const message = event.data;
   if (message?.jsonrpc === '2.0' && message.method === 'webview/dispatchEvent') {
@@ -200,6 +213,15 @@ window.addEventListener('message', (event: MessageEvent) => {
         if (tc) tc.innerText = `TOKENS // ${state.tokens.total.toLocaleString()}`;
         break;
       }
+      case 'StdoutChunk': {
+        const content = document.getElementById('status-content');
+        if (content) {
+          switchPanel('status');
+          content.textContent += payload.chunk;
+          content.scrollTop = content.scrollHeight;
+        }
+        break;
+      }
       case 'ModelChanged': {
         state.modelId = payload.modelId;
         const mn = document.getElementById('model-name');
@@ -211,7 +233,8 @@ window.addEventListener('message', (event: MessageEvent) => {
         renderSessionList(state.sessions);
         break;
       case 'StatusResult':
-        renderStatus(payload.text ?? '');
+        state.statusText = payload.text ?? '';
+        renderStatus(state.statusText);
         break;
       case 'Notification':
         appendMessage({ id: 'sys-' + Date.now(), role: 'system', content: payload.text });
