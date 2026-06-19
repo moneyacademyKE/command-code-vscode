@@ -43,6 +43,9 @@ import { runParallel, formatParallelResults, type AgentTask } from "./agents/orc
 import { initializePermissionStore } from "./permission/store";
 import { restoreLastCheckpoint } from "./git/checkpoint";
 import { CmdMcpServer } from "./mcp/server";
+import { readFileTool, writeFileTool, listFilesTool } from "./mcp/tools/fs";
+import { gitContextTool } from "./mcp/tools/git";
+import { diffProposeTool } from "./mcp/tools/diff";
 import { terminalTool } from "./mcp/tools/terminal";
 
 let currentSessionId: string | null = null;
@@ -456,7 +459,14 @@ export function activate(context: vscode.ExtensionContext): void {
     chatProvider.dispatchEvent(eventPayload);
   });
 
-  mcpServer = new CmdMcpServer(mcpSocketPath, [terminalTool]);
+  mcpServer = new CmdMcpServer(mcpSocketPath, [
+    terminalTool,
+    readFileTool,
+    writeFileTool,
+    listFilesTool,
+    gitContextTool,
+    diffProposeTool,
+  ]);
   mcpServer.start();
 
   ipcServer.start()

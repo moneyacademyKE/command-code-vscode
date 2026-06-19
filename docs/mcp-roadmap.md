@@ -29,6 +29,8 @@ The immediate objective is to strip business logic out of the VS Code extension 
 - **Diff Presentation**: Create an MCP tool for proposing diffs (`cmd-lite-diff`). The agent generates diff blocks independently, and the IDE merely consumes the proposed state to render the `vscode.diff` UI.
 - **Babashka Prototyping**: Migrate generic file-system tools to Clojure/Babashka (`bb.edn`) to maintain dependency-free speed.
 
+> **Note on the `cmd` Precompiled Binary**: Because `cmd` is a precompiled, globally installed binary (managed via `npm i -g command-code`), we do not compile its agent logic in this repository. The migration to standard MCP servers ensures the precompiled binary can dynamically discover these new capabilities at runtime (via standard `mcp.json` config files) without requiring a hard fork or recompilation of the core CLI engine.
+
 ## Phase 2: Agent Autonomy (Mid-Term)
 
 Focus on decoupling the execution environment from the VS Code window entirely, allowing the agent to persist and act autonomously.
