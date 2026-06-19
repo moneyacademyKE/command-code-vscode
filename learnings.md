@@ -90,4 +90,4 @@ To install and run this extension:
 ## Deep Audit (SOTA 2026) & Security
 - **Strict Socket Authentication**: Exposing UDS context sockets without authentication complects convenience with local privilege escalation. We implemented an `AUTH_HANDSHAKE` where the extension generates a UUID token and requires the connecting CLI to provide it.
 - **CLI Version Guarding**: To prevent silent failures when the extension's JSON-RPC protocol evolves ahead of the user's global `cmd` CLI, a mandatory `checkCliVersion` check (via `cmd --version`) enforces a minimum supported baseline (e.g., v0.39.0).
-- **Babashka Hook Tooling**: Replaced ad-hoc bash and python validation scripts with a unified Babashka (`install_hooks.clj`) pipeline, decomplecting pre-commit TDD enforcement from OS-level script dependencies.
+- **Removing Babashka**: As requested, we completely replaced all `.clj` Babashka tooling with native `npm` scripts and standard TypeScript (for test assertions), enforcing reliance purely on external MCP servers for agent capabilities and reducing repository toolchain dependencies.

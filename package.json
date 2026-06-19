@@ -506,6 +506,7 @@
     ]
   },
   "scripts": {
+    "prepare": "node scripts/install-hooks.js",
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "typecheck": "tsc --noEmit",
