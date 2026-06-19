@@ -21,6 +21,18 @@ export async function generateMcpConfig(): Promise<void> {
           workspaceRoot
         ],
       },
+      "fetch": {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-fetch"],
+      },
+      "puppeteer": {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-puppeteer"],
+      },
+      "memory": {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-memory"],
+      },
     },
   };
 
