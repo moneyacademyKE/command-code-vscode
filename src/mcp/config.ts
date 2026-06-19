@@ -9,25 +9,22 @@ export async function generateMcpConfig(): Promise<void> {
     return;
   }
 
-  // __dirname in compiled dist/extension.js is `<root>/dist`
-  const SCRIPT_DIR = path.join(__dirname, "..", "scripts");
-  const fsScript = path.join(SCRIPT_DIR, "mcp_fs.clj");
-  const gitScript = path.join(SCRIPT_DIR, "mcp_git.clj");
+  const workspaceRoot = workspaceFolders[0].uri.fsPath;
 
   const config = {
     mcpServers: {
-      "cmd-fs": {
-        command: "bb",
-        args: [fsScript],
-      },
-      "cmd-git": {
-        command: "bb",
-        args: [gitScript],
+      "filesystem": {
+        command: "npx",
+        args: [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          workspaceRoot
+        ],
       },
     },
   };
 
-  const targetPath = path.join(workspaceFolders[0].uri.fsPath, "mcp.json");
+  const targetPath = path.join(workspaceRoot, "mcp.json");
   
   try {
     fs.writeFileSync(targetPath, JSON.stringify(config, null, 2), "utf8");

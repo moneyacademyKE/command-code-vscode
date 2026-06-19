@@ -43,8 +43,6 @@ import { runParallel, formatParallelResults, type AgentTask } from "./agents/orc
 import { initializePermissionStore } from "./permission/store";
 import { restoreLastCheckpoint } from "./git/checkpoint";
 import { CmdMcpServer } from "./mcp/server";
-import { readFileTool, writeFileTool, listFilesTool } from "./mcp/tools/fs";
-import { gitContextTool } from "./mcp/tools/git";
 import { diffProposeTool } from "./mcp/tools/diff";
 import { terminalTool } from "./mcp/tools/terminal";
 import { generateMcpConfig } from "./mcp/config";
@@ -465,10 +463,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
   mcpServer = new CmdMcpServer(mcpSocketPath, [
     terminalTool,
-    readFileTool,
-    writeFileTool,
-    listFilesTool,
-    gitContextTool,
     diffProposeTool,
   ]);
   mcpServer.start();
