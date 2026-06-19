@@ -16,10 +16,8 @@ interface SessionItem {
 
 // Minimal application state (mirrored from CLI)
 const state = {
-  messages: [] as Array<{ id: string, role: string, content: string }>,
   tokens: { prompt: 0, completion: 0, total: 0 },
   modelId: '',
-  sessions: [] as SessionItem[],
   statusText: '',
 };
 
@@ -203,10 +201,11 @@ window.addEventListener('message', (event: MessageEvent) => {
   if (message?.jsonrpc === '2.0' && message.method === 'webview/dispatchEvent') {
     const { type, payload } = message.params;
     switch (type) {
-      case 'RenderMessage':
-        state.messages.push(payload);
-        appendMessage(payload);
+      case 'RenderMessage': {
+        const { id, role, content } = payload as any;
+        appendMessage({ id, role, content });
         break;
+      }
       case 'UpdateTokens': {
         state.tokens = payload;
         const tc = document.getElementById('token-count');

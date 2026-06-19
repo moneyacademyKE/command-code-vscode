@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { getActiveCwd } from "../../config";
 import type { McpTool } from "../server";
 
-const SCRIPT_PATH = path.join(__dirname, "..", "..", "..", "scripts", "mcp_fs.clj");
+const SCRIPT_PATH = path.join(__dirname, "..", "scripts", "mcp_fs.clj");
 
 function executeBabashkaFs(payload: any): Promise<any> {
   return new Promise((resolve, reject) => {

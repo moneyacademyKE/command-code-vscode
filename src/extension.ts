@@ -47,6 +47,7 @@ import { readFileTool, writeFileTool, listFilesTool } from "./mcp/tools/fs";
 import { gitContextTool } from "./mcp/tools/git";
 import { diffProposeTool } from "./mcp/tools/diff";
 import { terminalTool } from "./mcp/tools/terminal";
+import { generateMcpConfig } from "./mcp/config";
 
 let currentSessionId: string | null = null;
 let currentIdeName: string | null = null;
@@ -403,6 +404,9 @@ export function activate(context: vscode.ExtensionContext): void {
       } finally {
         statusBar.setBusy(false);
       }
+    }),
+    vscode.commands.registerCommand("cmd-lite.generateMcpConfig", async () => {
+      await generateMcpConfig();
     }),
   );
 
