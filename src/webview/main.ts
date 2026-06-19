@@ -49,6 +49,7 @@ function initUI() {
       <button class="action-btn" data-action="start" title="Start New Session">▶ START</button>
       <button class="action-btn" data-action="continue" title="Continue Last Session">↻ CONTINUE</button>
       <button class="action-btn" data-action="list-sessions" title="Recent Sessions">☰ SESSIONS</button>
+      <button class="action-btn" data-action="list-agents" title="Active Agents">⚑ AGENTS</button>
       <button class="action-btn" data-action="pick-model" title="Pick Model">⚙ MODEL</button>
       <button class="action-btn" data-action="pick-permission" title="Pick Permission">⚙ PERM</button>
       <button class="action-btn" data-action="show-status" title="Show Status">ⓘ STATUS</button>
@@ -71,6 +72,14 @@ function initUI() {
         <button class="panel-close" data-panel="sessions">✕</button>
       </div>
       <div class="session-list" id="session-list"></div>
+    </div>
+
+    <div id="agents-panel" class="panel">
+      <div class="panel-header">
+        <span>ACTIVE AGENTS</span>
+        <button class="panel-close" data-panel="agents">✕</button>
+      </div>
+      <div class="session-list" id="agent-list"></div>
     </div>
 
     <div id="status-panel" class="panel">
@@ -143,9 +152,48 @@ function attachEventListeners() {
       sendMessage();
     }
   });
+
+  // Drag and Drop for context
+  const inputContainer = document.querySelector('.chat-input-container') as HTMLElement;
+  if (inputContainer) {
+    inputContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      inputContainer.classList.add('dropzone-active');
+    });
+    inputContainer.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      inputContainer.classList.remove('dropzone-active');
+    });
+    inputContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      inputContainer.classList.remove('dropzone-active');
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          sendAction('file-dropped', { name: file.name, type: file.type, data: ev.target?.result });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Diff button delegation
+  const chatHistory = document.getElementById('chat-history');
+  chatHistory?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('diff-btn')) {
+      const action = target.classList.contains('accept') ? 'accept' : 'reject';
+      const id = target.dataset.id;
+      if (id) {
+        sendAction('respond-diff', { id, response: action });
+        target.parentElement!.innerHTML = `<span style="color:var(--accent)">[${action.toUpperCase()}]</span>`;
+      }
+    }
+  });
 }
 
-function switchPanel(panel: 'chat' | 'sessions' | 'status') {
+function switchPanel(panel: 'chat' | 'sessions' | 'status' | 'agents') {
   activePanel = panel;
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('panel-active'));
   const target = document.getElementById(`${panel}-panel`);
@@ -182,6 +230,25 @@ function renderSessionList(sessions: SessionItem[]) {
   `).join('');
 }
 
+function renderAgentList(agents: any[]) {
+  const list = document.getElementById('agent-list');
+  if (!list) return;
+  switchPanel('agents');
+  if (agents.length === 0) {
+    list.innerHTML = '<div class="session-empty">No active agents.</div>';
+    return;
+  }
+  list.innerHTML = agents.map(a => `
+    <div class="agent-item">
+      <span class="agent-icon">⚙</span>
+      <div class="agent-info">
+        <span class="agent-name">${escapeHtml(a.name)}</span>
+        <span class="agent-task">${escapeHtml(a.task)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
 function renderStatus(text: string) {
   const content = document.getElementById('status-content');
   if (!content) return;
@@ -204,6 +271,32 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'RenderMessage': {
         const { id, role, content } = payload as any;
         appendMessage({ id, role, content });
+        break;
+      }
+      case 'RenderImage': {
+        const { id, role, dataUri } = payload as any;
+        appendMessage({ id, role, content: `<img src="${dataUri}" class="chat-image" />` });
+        break;
+      }
+      case 'RenderDiffProposal': {
+        const { id, diffText } = payload as any;
+        const html = `
+          <div class="diff-widget">
+            <div class="diff-header">
+              <span>PROPOSAL</span>
+              <div class="diff-actions">
+                <button class="diff-btn accept" data-id="${id}">ACCEPT</button>
+                <button class="diff-btn reject" data-id="${id}">REJECT</button>
+              </div>
+            </div>
+            <div class="diff-content">${escapeHtml(diffText).replace(/^(\\+.*)$/gm, '<span class="diff-line add">$1</span>').replace(/^(-.*)$/gm, '<span class="diff-line sub">$1</span>')}</div>
+          </div>
+        `;
+        appendMessage({ id, role: 'system', content: html });
+        break;
+      }
+      case 'UpdateAgents': {
+        renderAgentList(payload.agents ?? []);
         break;
       }
       case 'UpdateTokens': {
