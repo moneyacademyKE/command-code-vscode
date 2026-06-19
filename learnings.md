@@ -82,3 +82,7 @@ To install and run this extension:
 
 ## Scripting and Tasks
 - **Babashka (bb) over Python**: To standardize script execution and prevent environment fragmentation, all build and testing tasks are orchestrated via `bb.edn` using Babashka. Babashka leverages Clojure's simplicity and immutable data structures, perfectly aligning with the project's Rich Hickey philosophy.
+
+## Agent Autonomy & External MCP Registries
+- **Composable Registries Pivot**: We discovered that maintaining local custom scripts (e.g. Babashka file-system wrappers) inside an IDE extension couples the agent unnecessarily to the IDE repo, violating the goal of decomplecting. Instead, we pivot to generating an `mcp.json` that provisions **Official Reference MCP Servers** via `npx` (e.g., `@modelcontextprotocol/server-filesystem`). 
+- **The Power of `npx -y`**: Generating configs that utilize `npx -y` allows the precompiled headless CLI to dynamically download and execute the latest external capabilities (File System, Git, Memory) strictly at runtime. This requires zero bundling, zero maintenance of generic tool logic within the extension, and leaves the extension operating purely as a lightweight configuration and UI layer.

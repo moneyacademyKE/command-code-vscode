@@ -64,3 +64,7 @@
 ### Universal Scripting Pattern
 - **Context**: Using heterogeneous languages (Python, Bash, JS) for simple build tasks creates environment entropy and runtime dependency hell.
 - **Solution**: Adopt Babashka (`bb.edn`) for all repository scripting. This enforces a fast, unified, and dependency-free Clojure runtime that embraces "Simple Made Easy."
+
+### Composable Registries Pattern (Agent Autonomy)
+- **Context**: Writing custom wrapper scripts (even in Babashka) inside an IDE extension to grant the CLI OS-level capabilities tightly couples the execution environment to the IDE repository.
+- **Solution**: Pivot entirely to composing external registries. Generate dynamic configuration files (`mcp.json`) that command the headless CLI to provision **Official Reference MCP Servers** via `npx -y` at runtime. This removes maintenance burden from the extension layer and ensures the agent always operates on standard, open-source capability sets.

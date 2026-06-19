@@ -27,7 +27,7 @@ The immediate objective is to strip business logic out of the VS Code extension 
 - **File System Tools**: Deprecate `vscode.workspace.fs` dependencies within the agent's logic loop. Implement `cmd-mcp-fs` tools (`readFile`, `writeFile`, `listFiles`) that operate natively via Node.js or Babashka, eliminating editor-specific URIs.
 - **Git Context Tools**: Expose the current branch, uncommitted changes, and commit history via an MCP tool rather than relying on the proprietary VS Code Git API.
 - **Diff Presentation**: Create an MCP tool for proposing diffs (`cmd-lite-diff`). The agent generates diff blocks independently, and the IDE merely consumes the proposed state to render the `vscode.diff` UI.
-- **Babashka Prototyping**: Migrate generic file-system tools to Clojure/Babashka (`bb.edn`) to maintain dependency-free speed.
+- **External Registries Pivot**: We deprecated custom Babashka file-system scripts. Instead, we use `npx` to dynamically provision official `@modelcontextprotocol/server-filesystem` and `@modelcontextprotocol/server-github` servers, fully decomplecting standard operations from the extension.
 
 > **Note on the `cmd` Precompiled Binary**: Because `cmd` is a precompiled, globally installed binary (managed via `npm i -g command-code`), we do not compile its agent logic in this repository. The migration to standard MCP servers ensures the precompiled binary can dynamically discover these new capabilities at runtime (via standard `mcp.json` config files) without requiring a hard fork or recompilation of the core CLI engine.
 
@@ -45,7 +45,7 @@ Focus on decoupling the execution environment from the VS Code window entirely, 
 Evolve the system from a single interactive loop to a multi-agent orchestrated cluster, discovering tools dynamically.
 
 ### Objectives
-- **Tool Registries**: Allow dynamic discovery of MCP servers beyond the built-in VS Code extension server. (e.g., connecting a user's local Postgres DB via an external SQL MCP server).
+- **Tool Registries (Completed via Config Generator)**: The `cmd-lite.generateMcpConfig` command now automatically bridges the gap by writing an `mcp.json` that provisions external Node-based MCP servers dynamically.
 - **Multi-Agent Orchestration**: Implement parallel sub-agents (e.g., "Tester", "Documenter") that are provisioned with specific subsets of MCP tools based on their role, enforcing security through least-privilege tool subsets.
 - **Universal Affordances**: Provide cross-editor compatibility out-of-the-box. The `cmd` CLI will be fully capable of operating inside Zed, Cursor, or Claude Desktop by standardizing its transport layer to standard stdio/SSE.
 
