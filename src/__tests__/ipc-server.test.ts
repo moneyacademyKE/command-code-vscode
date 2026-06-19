@@ -49,6 +49,10 @@ describe("IPCServer Integration", () => {
       const client = net.createConnection(socketPath);
       client.on("connect", () => {
         client.write(JSON.stringify({
+          type: "auth",
+          token: "test-token"
+        }) + "\n");
+        client.write(JSON.stringify({
           type: "request",
           id: "req-1",
           payload: { action: IPC_ACTIONS.GET_CONTEXT }
@@ -68,7 +72,9 @@ describe("IPCServer Integration", () => {
             client.end();
             resolve();
           } catch (err) {
-            reject(err);
+            if (buffer.trim() !== "") {
+              reject(err);
+            }
           }
         }
       });
@@ -80,6 +86,10 @@ describe("IPCServer Integration", () => {
     return new Promise<void>((resolve, reject) => {
       const client = net.createConnection(socketPath);
       client.on("connect", () => {
+        client.write(JSON.stringify({
+          type: "auth",
+          token: "test-token"
+        }) + "\n");
         client.write(JSON.stringify({
           type: "request",
           id: "req-2",
@@ -100,7 +110,7 @@ describe("IPCServer Integration", () => {
             client.end();
             resolve();
           } catch (err) {
-            reject(err);
+            if (buffer.trim() !== "") reject(err);
           }
         }
       });

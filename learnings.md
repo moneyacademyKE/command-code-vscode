@@ -86,3 +86,8 @@ To install and run this extension:
 ## Agent Autonomy & External MCP Registries
 - **Composable Registries Pivot**: We discovered that maintaining local custom scripts (e.g. Babashka file-system wrappers) inside an IDE extension couples the agent unnecessarily to the IDE repo, violating the goal of decomplecting. Instead, we pivot to generating an `mcp.json` that provisions **Official Reference MCP Servers** via `npx` (e.g., `@modelcontextprotocol/server-filesystem`). 
 - **The Power of `npx -y`**: Generating configs that utilize `npx -y` allows the precompiled headless CLI to dynamically download and execute the latest external capabilities (File System, Git, Memory) strictly at runtime. This requires zero bundling, zero maintenance of generic tool logic within the extension, and leaves the extension operating purely as a lightweight configuration and UI layer.
+
+## Deep Audit (SOTA 2026) & Security
+- **Strict Socket Authentication**: Exposing UDS context sockets without authentication complects convenience with local privilege escalation. We implemented an `AUTH_HANDSHAKE` where the extension generates a UUID token and requires the connecting CLI to provide it.
+- **CLI Version Guarding**: To prevent silent failures when the extension's JSON-RPC protocol evolves ahead of the user's global `cmd` CLI, a mandatory `checkCliVersion` check (via `cmd --version`) enforces a minimum supported baseline (e.g., v0.39.0).
+- **Babashka Hook Tooling**: Replaced ad-hoc bash and python validation scripts with a unified Babashka (`install_hooks.clj`) pipeline, decomplecting pre-commit TDD enforcement from OS-level script dependencies.

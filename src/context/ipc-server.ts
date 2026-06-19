@@ -82,6 +82,7 @@ export class IPCServer implements vscode.Disposable {
   private readonly outputChannel: vscode.OutputChannel;
   private server: net.Server | null = null;
   private connections = new Set<net.Socket>();
+  private authenticatedSockets = new Set<net.Socket>();
   private webviewDispatcher?: (eventPayload: unknown) => void;
   private uiLockOwner: net.Socket | null = null;
 
@@ -189,12 +190,21 @@ export class IPCServer implements vscode.Disposable {
 
     this.connections.add(socket);
 
+    const authTimeout = setTimeout(() => {
+      if (!this.authenticatedSockets.has(socket)) {
+        this.log("Connection failed to authenticate in time; closing");
+        socket.destroy();
+      }
+    }, 5000);
+
     socket.on("close", () => {
       this.connections.delete(socket);
+      this.authenticatedSockets.delete(socket);
       if (this.uiLockOwner === socket) {
         this.log("UI lock owner disconnected. Releasing UI lock.");
         this.uiLockOwner = null;
       }
+      clearTimeout(authTimeout);
     });
 
     socket.setTimeout(IDLE_TIMEOUT_MS);
@@ -236,7 +246,7 @@ export class IPCServer implements vscode.Disposable {
           return;
         }
 
-        await this.handleMessage(socket, messageStr);
+        await this.handleMessage(socket, messageStr, authTimeout);
       }
     });
   }
@@ -244,6 +254,7 @@ export class IPCServer implements vscode.Disposable {
   private async handleMessage(
     socket: net.Socket,
     messageStr: string,
+    authTimeout: NodeJS.Timeout,
   ): Promise<void> {
     const message = parseMessage(messageStr);
     if (!message) {
@@ -253,6 +264,27 @@ export class IPCServer implements vscode.Disposable {
         "PARSE_ERROR",
       );
       this.sendMessage(socket, errorResponse);
+      return;
+    }
+
+    if (!this.authenticatedSockets.has(socket)) {
+      if (
+        typeof message === "object" &&
+        message !== null &&
+        (message as Record<string, unknown>).type === "auth"
+      ) {
+        if ((message as Record<string, unknown>).token === this.authToken) {
+          this.authenticatedSockets.add(socket);
+          clearTimeout(authTimeout);
+          this.log("Connection authenticated successfully.");
+        } else {
+          this.log("Authentication failed: invalid token. Closing connection.");
+          socket.destroy();
+        }
+        return;
+      }
+      this.log("Connection sent non-auth message before authenticating. Closing.");
+      socket.destroy();
       return;
     }
 

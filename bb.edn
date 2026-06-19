@@ -6,4 +6,6 @@
   lint {:doc "Run linter"
         :task (p/exec "npm run lint")}
   build {:doc "Compile extension"
-         :task (p/exec "npm run build")}}}
+         :task (p/exec "npm run build")}
+  install-hooks {:doc "Install pre-commit git hooks"
+                 :task (p/exec "bb scripts/install_hooks.clj")}}}

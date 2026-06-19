@@ -72,3 +72,11 @@
 ### Base64 DataURI Context Bridge Pattern
 - **Context**: Sandboxed IDE Webviews cannot reliably access OS absolute file paths, preventing users from dragging-and-dropping context (like images or logs) directly to an external CLI process.
 - **Solution**: Intercept the HTML5 `drop` event within the Webview, convert the file to a Base64 DataURI using `FileReader`, and pass the serialized payload over JSON-RPC to the extension host. The extension can then securely cache the file in the workspace or forward the URI to the CLI's MCP File System tool.
+
+### Socket Authentication Pattern
+- **Context**: Relying on Unix file permissions (`0o600`) alone does not fully protect shared or containerized environments from unauthorized local processes accessing IDE context.
+- **Solution**: Enforce an `AUTH_HANDSHAKE` as the first message on any incoming UDS connection. Generate a secure UUID token in the extension, store it in a secured `0o700` session file, and require the connecting CLI agent to read and pass this token before processing any requests.
+
+### External CLI Version Guard Pattern
+- **Context**: When wrapping a globally installed CLI, extension updates might introduce new JSON-RPC actions that older CLI binaries do not understand, causing silent protocol failures.
+- **Solution**: On extension activation, synchronously call the CLI with `--version` and assert against a `MINIMUM_CLI_VERSION` constant. Block initialization and prompt the user to update their CLI rather than allowing corrupt or silent execution errors.
