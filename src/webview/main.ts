@@ -399,12 +399,18 @@ marked.use({
 
 // ─── Smart Scroll ─────────────────────────────────
 
+let wasNearBottom = true;
+
 function isNearBottom(el: HTMLElement, threshold = 150): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
 }
 
 function scrollToBottom(el: HTMLElement): void {
   el.scrollTop = el.scrollHeight;
+  // Double-scroll fallback using requestAnimationFrame to ensure layout reflow is complete
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
 }
 
 function setupScrollButton(container: HTMLElement): void {
@@ -412,12 +418,42 @@ function setupScrollButton(container: HTMLElement): void {
   btn.id = 'scroll-bottom-btn';
   btn.className = 'scroll-bottom-btn';
   btn.textContent = '\u25BC BOTTOM';
-  btn.addEventListener('click', () => scrollToBottom(container));
+  btn.addEventListener('click', () => {
+    wasNearBottom = true;
+    scrollToBottom(container);
+  });
   container.parentElement?.appendChild(btn);
 
+  // Scroll listener to update state and toggle button visibility
   container.addEventListener('scroll', () => {
-    btn.classList.toggle('visible', !isNearBottom(container));
+    const near = isNearBottom(container);
+    wasNearBottom = near;
+    btn.classList.toggle('visible', !near);
   });
+
+  // Watch for any DOM changes inside the container (appended messages, syntax highlights, streaming text)
+  if (typeof MutationObserver !== 'undefined') {
+    const observer = new MutationObserver(() => {
+      if (wasNearBottom) {
+        scrollToBottom(container);
+      }
+    });
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  }
+
+  // Watch for image loads (which are async and change layout heights)
+  container.addEventListener('load', (e) => {
+    const target = e.target as HTMLElement;
+    if (target && target.tagName === 'IMG') {
+      if (wasNearBottom) {
+        scrollToBottom(container);
+      }
+    }
+  }, true); // Use capture phase because load event does not bubble
 }
 
 // ─── Footer Status Bar ────────────────────────────────
@@ -701,6 +737,13 @@ function appendMessage(m: { id: string; role: string; content: string }, streami
   const history = document.getElementById('chat-history');
   if (!history) return;
   switchPanel('chat');
+
+  // Determine if we were at the bottom before mutating the DOM
+  if (m.role === 'user') {
+    wasNearBottom = true;
+  }
+  const shouldScroll = wasNearBottom || isNearBottom(history);
+
   let div = document.getElementById(m.id);
   if (!div) {
     div = document.createElement('div');
@@ -717,7 +760,10 @@ function appendMessage(m: { id: string; role: string; content: string }, streami
   }
 
   div.innerHTML = `<span class="message-role">${m.role}</span><div class="message-content">${parsedContent}</div>`;
-  if (isNearBottom(history)) scrollToBottom(history);
+  if (shouldScroll) {
+    wasNearBottom = true;
+    scrollToBottom(history);
+  }
 }
 
 // ─── Panel System ─────────────────────────────────────
@@ -1392,10 +1438,13 @@ window.addEventListener('message', (event: MessageEvent) => {
         const content = document.getElementById('status-content');
         if (content) {
           switchPanel('status');
+          const wasAtBottom = isNearBottom(content);
           state.statusText += payload.chunk;
           saveState();
           content.innerHTML = cleanAndColorAnsi(state.statusText);
-          if (isNearBottom(content)) scrollToBottom(content);
+          if (wasAtBottom) {
+            scrollToBottom(content);
+          }
         }
         break;
       }

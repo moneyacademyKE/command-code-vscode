@@ -94,6 +94,7 @@ body::after {
 .chat-history {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 20px;
   display: flex;
   flex-direction: column;
