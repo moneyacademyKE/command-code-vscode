@@ -1,4 +1,3 @@
-import * as vscode from "vscode";
 import { getActiveCwd } from "../../config";
 import * as path from "node:path";
 import type { McpTool } from "../server";
@@ -32,9 +31,10 @@ export const diffProposeTool: McpTool = {
       return {
         content: [{ type: "text", text: `Successfully opened diff view for ${filePath}. The user must review it.` }],
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       return {
-        content: [{ type: "text", text: `Failed to open diff view: ${err.message}` }],
+        content: [{ type: "text", text: `Failed to open diff view: ${msg}` }],
         isError: true,
       };
     }

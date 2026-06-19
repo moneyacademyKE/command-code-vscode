@@ -2,6 +2,7 @@
 /**
  * Thin Glass UI Renderer
  */
+import { marked } from 'marked';
 
 // @ts-expect-error acquireVsCodeApi is provided by VS Code webview
 const vscode = acquireVsCodeApi();
@@ -15,13 +16,19 @@ interface SessionItem {
 }
 
 // Minimal application state (mirrored from CLI)
-const state = {
+const state: {
+  tokens: { prompt: number, completion: number, total: number },
+  modelId: string,
+  statusText: string,
+  sessions?: SessionItem[]
+} = {
   tokens: { prompt: 0, completion: 0, total: 0 },
   modelId: '',
   statusText: '',
 };
 
 // Track which panel is visible
+let activePanel: 'chat' | 'sessions' | 'status' | 'agents' = 'chat';
 
 function sendAction(action: string, payload?: Record<string, unknown>) {
   vscode.postMessage({ type: 'action', action, payload });
@@ -206,7 +213,13 @@ function appendMessage(m: { id: string, role: string, content: string }) {
   switchPanel('chat');
   const div = document.createElement('div');
   div.className = `message message-${m.role}`;
-  div.innerHTML = `<span class="message-role">${m.role}</span><span>${m.content}</span>`;
+  
+  let parsedContent = m.content;
+  if (!m.content.startsWith('<img') && !m.content.startsWith('<div class="diff-widget"')) {
+    parsedContent = marked.parse(m.content) as string;
+  }
+  
+  div.innerHTML = `<span class="message-role">${m.role}</span><div class="message-content">${parsedContent}</div>`;
   history.appendChild(div);
   history.scrollTop = history.scrollHeight;
 }
@@ -230,7 +243,7 @@ function renderSessionList(sessions: SessionItem[]) {
   `).join('');
 }
 
-function renderAgentList(agents: any[]) {
+function renderAgentList(agents: { name: string; task: string }[]) {
   const list = document.getElementById('agent-list');
   if (!list) return;
   switchPanel('agents');
@@ -269,17 +282,17 @@ window.addEventListener('message', (event: MessageEvent) => {
     const { type, payload } = message.params;
     switch (type) {
       case 'RenderMessage': {
-        const { id, role, content } = payload as any;
+        const { id, role, content } = payload as { id: string, role: string, content: string };
         appendMessage({ id, role, content });
         break;
       }
       case 'RenderImage': {
-        const { id, role, dataUri } = payload as any;
+        const { id, role, dataUri } = payload as { id: string, role: string, dataUri: string };
         appendMessage({ id, role, content: `<img src="${dataUri}" class="chat-image" />` });
         break;
       }
       case 'RenderDiffProposal': {
-        const { id, diffText } = payload as any;
+        const { id, diffText } = payload as { id: string, diffText: string };
         const html = `
           <div class="diff-widget">
             <div class="diff-header">
@@ -322,7 +335,7 @@ window.addEventListener('message', (event: MessageEvent) => {
       }
       case 'SessionList':
         state.sessions = payload.sessions ?? [];
-        renderSessionList(state.sessions);
+        renderSessionList(state.sessions ?? []);
         break;
       case 'StatusResult':
         state.statusText = payload.text ?? '';

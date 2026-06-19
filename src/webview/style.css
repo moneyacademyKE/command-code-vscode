@@ -24,6 +24,10 @@ body {
   height: 100vh;
   position: relative;
   overflow: hidden;
+}
+
+/* Add uppercase back to specific UI components */
+.header h2, .metrics, .action-btn, .panel-header, .panel-close, .message-role, .diff-btn, button, .agent-task {
   text-transform: uppercase;
 }
 
@@ -397,6 +401,48 @@ button:hover::before {
   display: flex;
   flex-direction: column;
   gap: 15px;
+}
+
+/* Scaffolding for markdown content */
+.message-content {
+  line-height: 1.5;
+  text-transform: none; /* Ensure no uppercase is inherited */
+  font-family: var(--font-mono);
+}
+.message-content p { margin: 0 0 10px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.message-content pre {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  overflow-x: auto;
+  color: var(--accent);
+}
+.message-content code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+.message-content pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+.message-content h1, .message-content h2, .message-content h3, .message-content h4 {
+  margin: 15px 0 10px 0;
+  color: var(--fg-color);
+  text-transform: uppercase;
+  font-size: 1.1em;
+}
+.message-content ul, .message-content ol {
+  margin: 0 0 10px 0;
+  padding-left: 20px;
+}
+.message-content blockquote {
+  border-left: 2px solid var(--accent);
+  margin: 0;
+  padding-left: 10px;
+  color: #aaa;
 }
 
 /* Adjust existing styles for panel layout */

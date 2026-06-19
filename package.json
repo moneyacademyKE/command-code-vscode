@@ -515,6 +515,7 @@
     "lint": "eslint src --ext .ts"
   },
   "devDependencies": {
+    "@types/marked": "^5.0.2",
     "@types/node": "^20.19.43",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
@@ -526,6 +527,7 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "marked": "^18.0.5"
   }
 }

@@ -41,7 +41,8 @@ export async function generateMcpConfig(): Promise<void> {
   try {
     fs.writeFileSync(targetPath, JSON.stringify(config, null, 2), "utf8");
     vscode.window.showInformationMessage(`Successfully generated mcp.json at ${targetPath}`);
-  } catch (err: any) {
-    vscode.window.showErrorMessage(`Failed to generate mcp.json: ${err.message}`);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    vscode.window.showErrorMessage(`Failed to generate mcp.json: ${msg}`);
   }
 }

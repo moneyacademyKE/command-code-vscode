@@ -30,7 +30,7 @@ describe("terminalTool", () => {
   });
 
   it("should execute a command and return stdout", async () => {
-    const result = await terminalTool.execute({ command: "echo test" }) as any;
+    const result = await terminalTool.execute({ command: "echo test" }) as { content: { type: string, text: string }[] };
     
     expect(cp.exec).toHaveBeenCalledWith(
       "echo test",
@@ -44,7 +44,7 @@ describe("terminalTool", () => {
   });
 
   it("should handle command errors and return stderr", async () => {
-    const result = await terminalTool.execute({ command: "fail-cmd" }) as any;
+    const result = await terminalTool.execute({ command: "fail-cmd" }) as { content: { type: string, text: string }[] };
     
     expect(result.content[0].text).toContain("STDERR:\nerror output");
     expect(result.content[0].text).not.toContain("EXIT CODE: 0");

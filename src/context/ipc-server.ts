@@ -316,7 +316,9 @@ export class IPCServer implements vscode.Disposable {
       }
 
       if (action === IPC_ACTIONS.APPLY_EDIT) {
-        const success = await this.contextProvider.applyEdit(request.payload.editPayload);
+        const success = await this.contextProvider.applyEdit(
+          request.payload.editPayload as Record<string, Array<{ range: [{line: number; character: number}, {line: number; character: number}]; newText: string; }>>
+        );
         const response = createContextResponse(request.id, { success });
         this.sendMessage(socket, response);
         return;

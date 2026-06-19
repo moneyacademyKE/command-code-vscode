@@ -221,7 +221,7 @@ export class ContextProvider implements vscode.Disposable {
     }
   }
 
-  async applyEdit(editPayload: any): Promise<boolean> {
+  async applyEdit(editPayload: Record<string, Array<{ range: [{line: number; character: number}, {line: number; character: number}]; newText: string; }>>): Promise<boolean> {
     if (!editPayload || typeof editPayload !== "object") return false;
     try {
       const workspaceEdit = new vscode.WorkspaceEdit();

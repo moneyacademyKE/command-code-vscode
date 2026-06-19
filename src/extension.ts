@@ -38,7 +38,6 @@ import {
 import { registerLmTools } from "./tools/lm-tools";
 import { showInlineDiff, extractFirstDiffFile, proposedDiffProvider, acceptDiffProposals, rejectDiffProposals, getCurrentDiffManager } from "./diff/preview";
 import { runPrint, getStatus } from "./cli/commands";
-import { listSessions } from "./ui/sessionView";
 import { runParallel, formatParallelResults, type AgentTask } from "./agents/orchestrator";
 import { initializePermissionStore } from "./permission/store";
 import { restoreLastCheckpoint } from "./git/checkpoint";
