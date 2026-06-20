@@ -22,7 +22,7 @@ vi.mock("vscode", () => {
 });
 
 describe("participant tests", () => {
-  let mockContext: any;
+  let mockContext: vscode.ExtensionContext;
 
   beforeEach(() => {
     mockContext = {
@@ -30,7 +30,7 @@ describe("participant tests", () => {
       subscriptions: {
         push: vi.fn(),
       },
-    };
+    } as unknown as vscode.ExtensionContext;
     vi.clearAllMocks();
   });
 

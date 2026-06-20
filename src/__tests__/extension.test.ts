@@ -5,19 +5,19 @@ import * as vscode from "vscode";
 vi.mock("vscode", () => {
   return {
     TreeItem: class {
-      constructor(public label: string, public collapsibleState?: any) {}
+      constructor(public label: string, public collapsibleState?: number) {}
     },
     ThemeIcon: class {
       constructor(public id: string) {}
     },
     RelativePattern: class {
-      constructor(public base: any, public pattern: string) {}
+      constructor(public base: unknown, public pattern: string) {}
     },
     Position: class {
       constructor(public line: number, public character: number) {}
     },
     Range: class {
-      constructor(public start: any, public end: any) {}
+      constructor(public start: unknown, public end: unknown) {}
     },
     WorkspaceEdit: class {
       replace = vi.fn();
@@ -114,7 +114,7 @@ vi.mock("vscode", () => {
 });
 
 describe("extension tests", () => {
-  let mockContext: any;
+  let mockContext: vscode.ExtensionContext;
 
   beforeEach(() => {
     mockContext = {
@@ -126,7 +126,7 @@ describe("extension tests", () => {
         get: vi.fn(() => ({})),
         update: vi.fn(() => Promise.resolve()),
       },
-    };
+    } as unknown as vscode.ExtensionContext;
     vi.clearAllMocks();
   });
 

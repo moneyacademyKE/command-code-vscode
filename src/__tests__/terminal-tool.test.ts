@@ -5,7 +5,7 @@ import { EventEmitter } from "node:events";
 
 vi.mock("node:child_process", () => {
   const spawn = vi.fn((cmd) => {
-    const emitter = new EventEmitter() as any;
+    const emitter = new EventEmitter() as EventEmitter & { stdout: EventEmitter; stderr: EventEmitter };
     emitter.stdout = new EventEmitter();
     emitter.stderr = new EventEmitter();
 

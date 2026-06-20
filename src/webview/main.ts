@@ -11,8 +11,8 @@ import { escapeHtml } from '../util/util';
 
 declare function acquireVsCodeApi(): {
   postMessage(message: unknown): void;
-  getState(): any;
-  setState(state: any): void;
+  getState(): unknown;
+  setState(state: unknown): void;
 };
 
 const vscode = acquireVsCodeApi();
@@ -1614,7 +1614,7 @@ function initUI() {
   if (chatHistory) setupScrollButton(chatHistory);
 
   // Restore state if it exists
-  const previousState = vscode.getState();
+  const previousState = vscode.getState() as Partial<typeof state> | null;
   if (previousState) {
     state.tokens = previousState.tokens || state.tokens;
     state.modelId = previousState.modelId || state.modelId;

@@ -3,7 +3,7 @@ import { registerLmTools } from "../tools/lm-tools";
 import * as vscode from "vscode";
 
 vi.mock("vscode", () => {
-  const registeredTools: any[] = [];
+  const registeredTools: unknown[] = [];
   const lm = {
     registerTool: vi.fn((id, tool) => {
       registeredTools.push({ id, tool });
@@ -43,7 +43,7 @@ vi.mock("vscode", () => {
       file: vi.fn((p) => ({ fsPath: p, scheme: "file", path: p })),
     },
     LanguageModelToolResult: class {
-      constructor(public parts: any[]) {}
+      constructor(public parts: unknown[]) {}
     },
     LanguageModelTextPart: class {
       constructor(public value: string) {}
@@ -71,14 +71,14 @@ vi.mock("../agents/orchestrator", () => ({
 }));
 
 describe("lm-tools tests", () => {
-  let mockContext: any;
+  let mockContext: vscode.ExtensionContext;
 
   beforeEach(() => {
     mockContext = {
       subscriptions: {
         push: vi.fn(),
       },
-    };
+    } as unknown as vscode.ExtensionContext;
     vi.clearAllMocks();
   });
 
