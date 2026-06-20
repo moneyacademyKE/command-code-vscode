@@ -1,4 +1,5 @@
 {
+  "packageManager": "pnpm@11.7.0",
   "name": "cmd-lite",
   "displayName": "CMD Lite",
   "description": "A coding agent with taste. Wrap the Command Code (`cmd`) CLI as a native VS Code experience.",
@@ -506,6 +507,7 @@
     ]
   },
   "scripts": {
+    "preinstall": "bb scripts/enforce-package-manager.clj",
     "prepare": "bb scripts/install-hooks.clj",
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
