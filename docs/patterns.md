@@ -127,3 +127,14 @@ Keep the Webview completely stateless by using a CSS-driven panel system.
 - **Capture-Phase Load Event Monitoring**: Register a capturing `load` event listener on parent containers to catch async resource resolutions (such as image resource loading) that modify element bounds without changing DOM structures, executing scroll adjustments on load completion.
 - **Layout Shift Prevention (Stable Scroll Gutter)**: Reserve space for vertical scrollbars natively by specifying `scrollbar-gutter: stable;` on scrollable wrappers, preventing horizontal shifts on scrollbar initialization.
 
+---
+
+### Decoupled Filesystem Permission Store Pattern
+- **Problem**: Storing interactive user permissions (like `allow-always` for directories/files) in the IDE's local configuration storage (e.g. `globalState`) makes the data inaccessible to headless runs or CLI subprocesses running outside the editor workspace context. This complects execution authorization with the editor application's memory workspace.
+- **Solution**: Decouple authorization settings by writing permission preferences to a shared filesystem location (e.g., `~/.commandcode/permissions.json`) in a serialized format. Both the CLI agent and the IDE extension access this file, allowing headless CI runs to run with the exact same permission boundaries approved in the editor.
+
+---
+
+### Strict Runtime Data Guard Pattern
+- **Problem**: Relying on TypeScript type assertions (`as IpcRequest`, `as any`) at socket or process boundary layers creates a false sense of security. If a client transmits malformed JSON-RPC message payloads, it will lead to runtime crashes or unhandled exceptions in the handler functions.
+- **Solution**: Avoid type casting at communication boundaries. Narrow down incoming `unknown` objects using strict schema or runtime type guard assertions (e.g., `isIpcRequest(obj)`) that check the presence and types of all required fields before delegating the payload to the handler functions.

@@ -156,3 +156,26 @@
 - **Solution**: Decouple scroll adjustments from rendering updates. Maintain a single boolean state flag (`wasNearBottom`) that updates on user scroll events. Establish a `MutationObserver` on the dynamic container to intercept DOM changes, checking `wasNearBottom` to automatically adjust the `scrollTop` to the bottom post-reflow.
 - **Capture-Phase Load Event Monitoring**: Register a capturing `load` event listener on parent containers to catch async resource resolutions (such as image resource loading) that modify element bounds without changing DOM structures, executing scroll adjustments on load completion.
 - **Layout Shift Prevention (Stable Scroll Gutter)**: Reserve space for vertical scrollbars natively by specifying `scrollbar-gutter: stable;` on scrollable wrappers, preventing horizontal shifts on scrollbar initialization.
+
+## Pure Data Logging Stream Pattern (Decomplecting UI)
+- **Context**: Instantiating UI elements (like VS Code `OutputChannel`) directly inside business logic or tool executors (e.g. MCP terminal executions) complects domain logic with the editor's UI lifecycle, causing memory leaks and fragmented output panes. Furthermore, relying on `console.error` hides critical state failures from users.
+- **Solution**: Decomplect the logging mechanism. Establish a single, lazily-initialized singleton `Logger` utilizing modern structured logging (`vscode.LogOutputChannel`). Pass this logger down or import it globally, treating logging as a pure data stream. This ensures business logic remains ignorant of UI rendering while maintaining robust, user-visible diagnostics across the entire extension.
+
+---
+
+## Sandboxed Browser Verification Pattern
+- **Context**: To verify web applications, run E2E tests, or browse documentation, agents need browser control. Packaging heavy Chromium/Playwright binaries inside the IDE extension couples the runtime context to the editor, violating decomplecting. Moreover, simulating coordinates on a physical GUI screen (`computer-use-mcp`) complects OS windows, resolutions, and system permissions with tool execution.
+- **Solution**: Dynamically provision browser automation via `@playwright/mcp` defined in `mcp.json` running over standard stdio using `npx -y`. Instruct the agent to prefer Playwright's locator queries and accessibility trees (`browser_snapshot`) over pixel coordinates or screenshot-only verification. This isolates web interaction inside a headless sandboxed browser process, preserving host OS simplicity.
+
+---
+
+## Decoupled Filesystem Permission Store Pattern
+- **Context**: Storing interactive user permissions (like `allow-always` for directories/files) in the IDE's local configuration storage (e.g. `globalState`) makes the data inaccessible to headless runs or CLI subprocesses running outside the editor workspace context. This complects execution authorization with the editor application's memory workspace.
+- **Solution**: Decouple authorization settings by writing permission preferences to a shared filesystem location (e.g., `~/.commandcode/permissions.json`) in a serialized format. Both the CLI agent and the IDE extension access this file, allowing headless CI runs to run with the exact same permission boundaries approved in the editor.
+
+---
+
+## Strict Runtime Data Guard Pattern
+- **Context**: Relying on TypeScript type assertions (`as IpcRequest`, `as any`) at socket or process boundary layers creates a false sense of security. If a client transmits malformed JSON-RPC message payloads, it will lead to runtime crashes or unhandled exceptions in the handler functions.
+- **Solution**: Avoid type casting at communication boundaries. Narrow down incoming `unknown` objects using strict schema or runtime type guard assertions (e.g., `isIpcRequest(obj)`) that check the presence and types of all required fields before delegating the payload to the handler functions.
+

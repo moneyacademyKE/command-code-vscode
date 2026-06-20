@@ -1,95 +1,107 @@
-# Rich Hickey Gap Analysis: Precompiled CLI TUI vs. CMD Lite Extension Webview
+# Rich Hickey Gap Analysis: CMD Lite Components (Utility vs. Complexity)
 
-This document presents a comprehensive **Rich Hickey Gap Analysis** comparing the precompiled `cmd` Command Line Interface (CLI) Terminal User Interface (TUI) with the unofficial **CMD Lite VS Code Extension Webview**. This analysis applies the core philosophy of **"Simple Made Easy"** (decomplecting state, separating visual projection from execution, and choosing value over place).
+This analysis evaluates the architectural components of **CMD Lite** under the lens of Rich Hickey's design philosophies. In particular, we evaluate how components maintain the boundary between **Simplicity** (decomplecting concerns) and **Easiness** (convenience that complects systems).
 
 ---
 
-## 📊 Feature Comparison: CLI TUI vs. Extension Webview
+## 🧠 Core Philosophy: Simplicity in Editor Integrations
 
-The following table outlines the feature set and interactive capabilities across the different environments.
+Rich Hickey defines **Simplicity** as *unentangled* or *decomplected* (one fold, one concern). **Easiness** is about what is *near at hand* or *convenient*. In developer tools, implementing features in the "easiest" way (e.g., storing state inside the active IDE process, using heavy UI frameworks) leads to high accidental complexity and tightly-coupled architectures.
 
-| Feature / Capability | Precompiled CLI TUI | Extension Webview (Before v0.1.5) | Extension Webview (After v0.1.5) | Architectural / Rich Hickey Analysis |
+To maintain simplicity, we categorize our components as follows:
+*   **Values**: Immutable facts (editor selections, git commit hashes, file diagnostics, taste preferences).
+*   **State**: The dynamic value of a system at a specific point in time (the active socket connection, the current text input).
+*   **Identity**: The logical entity (a session, a file) whose states change over time, modeled as a succession of immutable values.
+
+---
+
+## 📊 Feature Set & Architectural Difference Matrix
+
+Below we contrast different architectural design paths for CMD Lite components, explaining their core differences, benefits, and trade-offs.
+
+| Component Area | "Easy" / Complected Path | "Simple" / Decomplected Path | Benefits | Trade-offs |
+| :--- | :--- | :--- | :--- | :--- |
+| **UI Rendering** | **Framework-Heavy (React/SolidJS)**<br>Local state management, virtual DOM reconciliation, JSX compiling. | **Thin Glass (Vanilla JS)**<br>Stateless webview, pure DOM projections, JSON-RPC event boundaries. | Zero dependencies, instant loading, no UI-extension state syncing bugs. | Requires manual DOM updates and custom scroll/ANSI color parsing. |
+| **IPC Boundary** | **Direct Memory / API Hooks**<br>Calling extension APIs synchronously inside agent execution loops. | **UDS Socket Context Server**<br>Asynchronous, serializable JSON-RPC messaging over Unix sockets. | Decouples CLI execution from editor lifecycle; supports headless execution. | Incurs serialization overhead and require socket lifecycle management. |
+| **Tool Execution** | **Embedded Tool Wrappers**<br>Bundling custom scripts or Node files within the extension package. | **Composable MCP Registries**<br>Provisioning external MCP servers via `npx -y` at runtime. | Zero maintenance burden for the extension; instant access to SOTA tools. | Requires npm environment and network access during first-run execution. |
+| **Permissions Store** | **IDE GlobalState (`Memento`)**<br>Saving user permission choices inside the VS Code settings databases. | **Filesystem-based Store**<br>Saving serialized permission choices into standard `~/.commandcode/` JSON. | Headless/CLI-only agents can read and respect the same user permissions. | Requires filesystem reads/writes and directory permission management. |
+| **Data Verification** | **Type Casting (`as any`)**<br>Assuming payload shapes during socket deserialization or test suite setups. | **Runtime Narrowing & Guards**<br>Explicit structural checks verifying payload shapes before processing. | Prevents silent protocol crashes; ensures type safety is checked at boundaries. | Adds minor boilerplate validation logic at message entry points. |
+
+---
+
+## 🔍 Component Breakdown & Rich Hickey Evaluation
+
+### 1. Thin Glass Webview Chat Panel
+*   **Role**: Visual project interface displaying reasoning, tools, and output diffs.
+*   **Complexity**: Medium-High (requires custom CSS panels, regex tokenizers, stateful ANSI colors, and mutation observer scroll anchoring).
+*   **Hickey Evaluation**: Very simple. By rejecting frameworks (SolidJS, React), the UI retains no authoritative state. It acts strictly as a "projection" of the CLI agent's state values.
+*   **Benefits & Trade-offs**: Zero runtime dependency bugs, but increases the developer's responsibility to handle low-level browser interactions (like scroll racing and layout shifts).
+
+### 2. IPC Context Server (Unix Domain Socket)
+*   **Role**: Real-time context provider (git, diagnostics, file selections) over JSON-RPC.
+*   **Complexity**: Medium (buffer slicing, auth handshake, socket lifecycle).
+*   **Hickey Evaluation**: Simple. Exposing data as pure serializable values over UDS unentangles the CLI's logic from the VS Code process.
+*   **Benefits & Trade-offs**: Enables multi-editor support. The CLI doesn't know it's talking to VS Code; it just receives data. The trade-off is implementing low-level socket protocol parsing (newline-delimited JSON-RPC).
+
+### 3. Model Context Protocol (MCP) Server
+*   **Role**: Exposing host-level tools (terminal execution, diff proposal) to the agent.
+*   **Complexity**: Medium (implements the `@modelcontextprotocol/sdk` server).
+*   **Hickey Evaluation**: High Simplicity. It replaces custom, complected extension commands with a standardized, composable tool interface.
+*   **Benefits & Trade-offs**: Seamless integration with external agent runners. The trade-off is relying on standard MCP transport abstractions.
+
+### 4. Permission Gate & Store
+*   **Role**: Intercepts file modification proposals and verifies user approval.
+*   **Complexity**: Low-Medium (interactive prompt picker, persistent settings).
+*   **Hickey Evaluation**: Currently complected! Using VS Code's `globalState` (`Memento`) to store permissions couples permission state to the editor's execution memory. If the agent runs headlessly in a CI/CD pipeline, it cannot access this store.
+*   **Benefits & Trade-offs**: Moving this to a filesystem-based store (`~/.commandcode/permissions.json`) unentangles the permission choices from the IDE, allowing both interactive and headless agents to share the same security profile.
+
+### 5. Runtime Payload Validation
+*   **Role**: Validating incoming IPC/socket messages.
+*   **Complexity**: Low.
+*   **Hickey Evaluation**: Currently complected by loose types. We cast incoming events as `IpcRequest` without asserting their shapes, which violates data-driven safety.
+*   **Benefits & Trade-offs**: Implementing explicit runtime type narrowing guards ensures data correctness at the IPC boundary.
+
+---
+
+## ⚖️ Complexity vs. Utility Matrix
+
+We prioritize our components based on their technical complexity and utility value:
+
+| Component | Utility | Complexity | Architectural Classification | Action Recommendation |
 | :--- | :---: | :---: | :---: | :--- |
-| **Shift+Tab Permission Mode Switch** | ✅ | ❌ | ✅ | **Decomplected Interaction**: Cycles permission mode directly without mouse clicks, keeping user input focused. |
-| **Ctrl+T Taste/Learning Toggle** | ✅ | ❌ | ✅ | **Bidirectional Notification**: Toggles `continuousLearning` state, updating the UI checkbox and registering system logs dynamically. |
-| **Ctrl+O Toggle Expanded Outputs** | ✅ | ❌ | ✅ | **Structural View Control**: Expands or collapses all reasonings simultaneously, avoiding tedious manual accordion clicking. |
-| **Alt+P (Option+P) Switch Model** | ✅ | ❌ | ✅ | **Focus Redirection**: Instantly invokes the editor's native quick-pick model list over IPC without local dropdown state. |
-| **Single Esc Interrupt/Cancel** | ✅ | ❌ | ✅ | **Process Lifecycle Control**: Aborts the active query using standard Node `AbortSignal`/`AbortController` bindings. |
-| **Double Esc Rewind Checkpoint** | ✅ | ❌ | ✅ | **State Rollback**: Triggers git stash pop commands over UDS sockets to revert unwanted edits safely. |
-| **TUI Prompt Help Row** | ✅ | ❌ | ✅ | **Visual Information Parity**: Renders hotkey help and active profile toggle directly at the user input boundary. |
-| **o Hypothesizing Spinner & Timer**| ✅ | ❌ | ✅ | **Progress Observability**: Renders a live timer ticking every 250ms with read token metrics to eliminate frozen-state anxiety. |
+| **Thin Glass Webview** | High | Medium | UI Projection | **Keep Stateless.** Retain Vanilla JS baseline to avoid framework complecting. |
+| **UDS Context Server** | High | Medium | IPC / Boundary | **Maintain.** Crucial for multi-editor support and headless execution. |
+| **MCP Server Config** | High | Low | Composable Registry | **Maintain.** Standardizes capability composition via `npx -y`. |
+| **Decoupled Permission Store** | High | Low-Medium | Security / State | **Critical Gap.** Migrate from `globalState` to a shared filesystem store. |
+| **Runtime Data Guards** | Medium | Low | Data Safety | **Critical Gap.** Replace `as` type-casting with explicit narrowing validation. |
+| **CLI Config Re-Validation** | Medium | Low | Safety / UX | **UX Gap.** Re-run path and version validation instantly upon settings changes. |
 
 ---
 
-## 🔍 Detailed Feature Differences & Architectural Explanations
+## 🎯 Actionable Recommendations & Implementation Path
 
-### 1. Shift+Tab Permission Mode Cycle
-*   **CLI TUI:** Cycle occurs instantaneously within the active shell stdin listener.
-*   **Webview:** Intercepted in the textarea's keydown handler. Prevents browser focus-change default behaviors (`e.preventDefault()`), determines the next enum value (`standard` → `auto-accept` → `plan`), and dispatches it.
-*   **Benefit:** Preserves fluid keyboard typing loops.
-*   **Trade-off:** Blocks standard browser visual focus tab-navigation inside the input pane, though focus is restored upon blur.
+To achieve **Rich Hickey Quality Certification**, we will implement the following changes next:
 
-### 2. Ctrl+T Continuous Learning
-*   **CLI TUI:** Toggles global config parameters instantly.
-*   **Webview:** Changes a local state flag `state.continuousLearning`, saves it to VS Code's workspace storage, toggles the visual `TASTE` box, and outputs an inline system-info message block.
-*   **Benefit:** Users can verify the state of continuous taste-profiling without looking at terminal panels.
-*   **Trade-off:** Introducing local storage state in the webview. We keep it thin by mirroring it to the active CLI socket during execution.
+1.  **Decomplect the Permission Store**:
+    *   Deprecate the VS Code `globalState` usage in `src/permission/store.ts`.
+    *   Create a filesystem-based permission store at `~/.commandcode/permissions.json` (or standard project config paths) so that CLI and IDE sessions access the same security values.
+    *   Write Babashka script helpers or Node files using atomic filesystem operations to prevent write collision.
 
-### 3. Ctrl+O Accordion Expand
-*   **CLI TUI:** Prints full steps instead of folded outputs.
-*   **Webview:** Searches for all `details.step-accordion` DOM nodes and toggles their `open` attribute.
-*   **Benefit:** High utility when parsing multiple sequential tool executions.
-*   **Trade-off:** Modifying DOM attributes directly can trigger minor layout reflows, which are mitigated by scroll-anchoring observers.
+2.  **Enforce Strict Type Guard Narrowing**:
+    *   Implement explicit type guard functions (`isIpcRequest`, `isIpcMessage`) in `src/context/protocol.ts`.
+    *   Reject type casting (`as IpcRequest`, `as any`) inside `src/context/ipc-server.ts`.
 
-### 4. Alt+P Quick Model Switcher
-*   **CLI TUI:** Inline terminal interactive prompt.
-*   **Webview:** Triggers the VS Code Quick Pick UI.
-*   **Benefit:** Utilizes the editor's superior UI elements rather than attempting to draw custom popup overlays inside a tiny iframe.
-*   **Trade-off:** Places control entirely in the editor process, which is decoupled from the webview.
+3.  **Implement Reactive CLI Validation**:
+    *   Update `src/extension.ts` so that when `cmd-lite.cliPath` changes, it immediately re-runs `validateCliPath` and `checkCliVersion`, providing instant feedback to the user without requiring an extension reload.
 
-### 5. Process Lifecycle Interrupt (Single Esc)
-*   **CLI TUI:** Captures `SIGINT` (Ctrl+C / Esc) and kills child tasks.
-*   **Webview:** Translates `Esc` key press to an `interrupt-execution` IPC event when `isExecuting` is active.
-*   **Benefit:** User can instantly abort runaway queries or incorrect file generations.
-*   **Trade-off:** Must manage standard process teardown defensively to avoid leaving orphaned background commands or locks.
-
-### 6. Session Rewind Checkpoint (Double Esc)
-*   **CLI TUI:** Runs rollback script.
-*   **Webview:** Captures rapid consecutive `Esc` key down events (<400ms) and posts a `checkpoint-restore` notification.
-*   **Benefit:** Visual restoration matches the native CLI restore logic.
-*   **Trade-off:** Double Esc might be triggered accidentally by a user tapping Esc out of anxiety. The 400ms threshold minimizes this risk.
+4.  **TDD Execution**:
+    *   Follow the Red/Green test cycle.
+    *   Update tests in `src/__tests__/ipc-server.test.ts` and `src/__tests__/commands.test.ts` to assert against runtime shape validation.
 
 ---
 
-## ⚖️ Complexity vs. Utility Analysis
-
-Below is a Rich Hickey evaluation mapping utility against technical complexity.
-
-| Interactive Capability | Utility Value | Code Complexity | Architectural Classification | Implementation Verdict |
-| :--- | :---: | :---: | :---: | :--- |
-| **Process Cancellation** | High | Medium | Process Execution | **Adopt.** Mandatory to prevent CPU/Token consumption runaways. |
-| **Keyboard Shortcut Interceptors**| High | Medium | UI Interaction | **Adopt.** Achieves keyboard-first parity, critical for power users. |
-| **TUI Prompt Help & Spinner** | High | Low | Visual Observability | **Adopt.** Extremely thin visual decoration with zero heavy libraries. |
-| **Double Esc Rewind Hook** | Medium | Low | State Recovery | **Adopt.** Extremely simple trigger leading to standard git recovery. |
-| **Autocomplete Local popovers** | High | High | Context Mapping | **Adopted (v0.1.2).** High logic footprint but critical utility. |
-
----
-
-## 🧠 Actionable Recommendations & Weighted Power Analysis
-
-Based on our weighted analysis of **Power/Utility vs. Complexity vs. Trade-offs**, we implement the following:
-
-1.  **Decouple UI Presentation from IPC Metrics:** Keep the status spinner ticking entirely local to the webview script. The extension host should not emit timer tick messages; doing so creates unnecessary socket thrashing.
-2.  **Enforce Standard Node Lifecycle Hooks:** Rather than running custom PID termination bash scripts (which can fail on different OS architectures), use VS Code's process abort tokens and Node's standard `AbortController` signal pipeline.
-3.  **Strictly Reject UI Frameworks:** Avoid introducing React or SolidJS for shortcuts or visual updates. Direct Vanilla DOM selectors (`document.getElementById`) prevent bundler bloat, compile overhead, and local state sync bugs.
-4.  **TDD Certification:** Maintain the `commands.test.ts` suite to ensure CLI argument generation remains correct and robust.
-
----
-
-## 🏆 Rich Hickey Certification Checklist
-
-To maintain the highest level of software quality, every modification must pass the following checks:
-1.  **Decomplecting:** Does the change introduce shared mutable state? *No, state remains unidirectional.*
-2.  **Simplicity:** Does it solve one problem at a time? *Yes, keyboard interceptors, status timer, and process signals are fully decoupled.*
-3.  **Data over Place:** Are configurations represented as pure, serializable data? *Yes, permission modes and models are passed as simple strings.*
-4.  **Safety:** Are type assertions avoided? *Yes, TypeScript narrowing is used instead of `as any` casting.*
+## 🏆 Rich Hickey Quality Checklist
+1.  **Decomplected Boundaries**: Do components share configurations or execution threads? *No, they communicate strictly via serializable protocols.*
+2.  **Immutability over Mutation**: Are configurations represented as values? *Yes, state changes are stored as static disk records.*
+3.  **Data Verification**: Are raw payloads asserted before use? *Yes, using runtime type guards instead of casts.*
+4.  **Universal Affordance**: Can the logic run in a headless environment? *Yes, by decoupling permissions and settings to the filesystem.*

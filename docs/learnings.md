@@ -58,3 +58,12 @@ We evaluated adding SolidJS and Partytown to the VS Code Webview to handle UI re
 - **The Complected Way:** Managing complex active-state routing protocols, using polling timers on the extension host, or sending custom event payloads for each elapsed second.
 - **The Simple Way:** Handle Shift+Tab, Ctrl+T, Ctrl+O, Alt+P, and Esc defensively using Vanilla JS keydown listeners in the webview, and use standard Node `AbortSignal`/`AbortController` at the CLI execution layer. The webview tracks execution duration locally to avoid UDS socket traffic, while double-pressing Esc maps to checkpoint-restore.
 
+### 13. Decoupled Filesystem Permission Store
+- **The Complected Way:** Using VS Code's `globalState` (Memento) to persist user directory/file permissions. This couples approval choices to the IDE process lifecycle, causing headless runs or CLI subprocesses (e.g. CI/CD scripts) to fail because they cannot access the IDE-locked memory stores.
+- **The Simple Way:** Move permission states to a shared filesystem configuration file (e.g. `~/.commandcode/permissions.json`). Both CLI and extension processes read/write to the same location, unentangling the security layer from any single host process.
+
+### 14. Strict Type Guard Narrowing at Boundaries
+- **The Complected Way:** Blindly casting incoming buffer strings using `as IpcRequest` or `as any`. This allows corrupt or malformed socket payloads to pass compilation, leading to unhandled runtime exceptions inside message dispatch systems.
+- **The Simple Way:** Enforcing strict TypeScript type guards (`isIpcRequest(obj)`) that narrow `unknown` values and explicitly assert the structure of the data payloads at the socket/IPC entry boundaries, maintaining data-driven correctness.
+
+
