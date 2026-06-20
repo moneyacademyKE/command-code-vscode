@@ -66,4 +66,9 @@ We evaluated adding SolidJS and Partytown to the VS Code Webview to handle UI re
 - **The Complected Way:** Blindly casting incoming buffer strings using `as IpcRequest` or `as any`. This allows corrupt or malformed socket payloads to pass compilation, leading to unhandled runtime exceptions inside message dispatch systems.
 - **The Simple Way:** Enforcing strict TypeScript type guards (`isIpcRequest(obj)`) that narrow `unknown` values and explicitly assert the structure of the data payloads at the socket/IPC entry boundaries, maintaining data-driven correctness.
 
+### 15. Decoupled Dependency Storage (pnpm vs. npm/Yarn/Bun)
+- **The Complected Way:** Storing project dependencies physically inside every local folder's `node_modules` (NPM/Bun) or requiring custom archive loader overlays at compile-time (Yarn PnP). This complects project layout with local disk storage structures or adds high incidental complexity to build systems.
+- **The Simple Way:** Standardizing on `pnpm`. By storing packages exactly once in a shared content-addressable storage pool (`~/.local/share/pnpm/store/`) and mapping them via hard links/symbolic links, pnpm isolates storage management from workspace composition while maintaining standard Node module resolution.
+
+
 

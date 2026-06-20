@@ -179,3 +179,10 @@
 - **Context**: Relying on TypeScript type assertions (`as IpcRequest`, `as any`) at socket or process boundary layers creates a false sense of security. If a client transmits malformed JSON-RPC message payloads, it will lead to runtime crashes or unhandled exceptions in the handler functions.
 - **Solution**: Avoid type casting at communication boundaries. Narrow down incoming `unknown` objects using strict schema or runtime type guard assertions (e.g., `isIpcRequest(obj)`) that check the presence and types of all required fields before delegating the payload to the handler functions.
 
+---
+
+## Decoupled Dependency Storage Pattern (pnpm)
+- **Context**: Storing project dependencies physically inside every local project folder (`node_modules`) duplication (npm/bun) or using complex runtime zip loaders (Yarn PnP) complects workspace structure with file storage location. This wastes disk space and makes builds unpredictable.
+- **Solution**: Standardize on `pnpm` to decouple dependency storage from project layouts. Store dependencies in a shared content-addressable global pool and link them into project workspaces using read-only symlinks, preserving native Node resolution compatibility.
+
+

@@ -122,3 +122,21 @@ To install and run this extension:
 - **Hypothesizing spinner status line**: Long-running CLI tasks create UX anxiety. We introduced a client-side execution status line ticking elapsed duration and showing read token totals. Triggering a status loop timer inside `setExecutingState` updates this status line every 250ms, showing a rotating spinner frame.
 - **Process cancellation via AbortSignal**: Ports Node's standard `AbortController`/`AbortSignal` from the extension host down to the spawned CLI wrapper, giving users the power to kill active queries instantly via `Esc` key interception.
 
+## Rich Hickey Logging Decomplecting (v0.1.6)
+- **Centralized LogOutputChannel**: Previously, scattered `vscode.window.createOutputChannel` calls (especially inside tool executions like `terminal.ts`) caused severe memory leaks and duplicate UI channels. We applied Rich Hickey's "Decomplecting" principle to separate business logic from UI lifecycle. We created a singleton `Logger` utilizing VS Code's native `LogOutputChannel` API (`{ log: true }`).
+- **Eliminating console.error**: Raw `console.error` calls trap diagnostic data in the VS Code Developer Tools, hiding errors from users. By replacing these with `Logger.error()`, errors are safely routed to a visible, centralized Output panel.
+
+## Browser and OS Automation (v0.1.7)
+- **A11y Tree over Visual Vision Loops**: Using OS-level screen capture and keyboard/mouse coordinates (`computer-use-mcp`) complects GUI state, window layout, and coordinates, causing fragile agent behavior and high token usage. Exposing browser automation via Playwright (`@playwright/mcp`) is far simpler and cleaner: the accessibility tree snapshot (`browser_snapshot`) maps web pages as structured data instead of pixels.
+- **Dynamic Capabilities Provisioning**: Rather than packaging heavy browser binaries in the extension bundle, we register `@playwright/mcp` and `@modelcontextprotocol/server-puppeteer` in `mcp.json`. The headless CLI agent resolves them using `npx -y` at runtime, keeping the extension light.
+- **Adopting OS-Level Computer Use**: Under user override, we also added the `computer-use-mcp` config entry (running `npx -y computer-use-mcp` dynamically). This unlocks full GUI automation capabilities, though it incurs increased coordinate management complexity and security risks compared to pure sandboxed browser contexts.
+
+## Rich Hickey Component Gap Analysis (v0.1.8)
+- **Complected vs. Simple Permission Store**: Storing user permission preferences inside VS Code's `globalState` couples execution parameters to the IDE's runtime memory, preventing headless CLI/CI environments from sharing user authorization context. Migrating permissions to a filesystem JSON store (e.g. `~/.commandcode/permissions.json`) fully unentangles this boundary.
+- **IPC Data Safety**: Implicitly casting raw incoming buffer chunks using `as IpcRequest` can cause runtime exceptions when receiving malformed JSON data. Utilizing strict TypeScript type guards and runtime narrowing ensures message data shapes are asserted before execution.
+- **Reactive Validation Loops**: Decoupling configuration from process validation by subscribing to settings change events and instantly re-verifying CLI binaries/versions prevents stale error states and improves user lifecycle experience.
+
+## Package Manager Gap Analysis (v0.1.9)
+- **Decoupled Dependency Storage**: Physical place-oriented copying of dependencies inside local project `node_modules` folders complects disk usage with workspace layouts. Standardizing on `pnpm` decouples project trees from physical files by storing packages exactly once in a machine-wide content-addressable storage pool, mapping them into projects via symlinks while preserving native Node resolution algorithms.
+
+
