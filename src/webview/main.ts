@@ -510,6 +510,24 @@ function scrollToBottom(el: HTMLElement): void {
   });
 }
 
+function getActiveScrollContainer(): HTMLElement | null {
+  const panel = state.activePanel;
+  if (panel === 'chat') {
+    return document.getElementById('chat-history');
+  }
+  if (panel === 'sessions') {
+    return document.getElementById('session-list');
+  }
+  if (panel === 'agents') {
+    return document.getElementById('agent-list');
+  }
+  if (panel === 'status') {
+    return document.getElementById('status-content');
+  }
+  return null;
+}
+
+
 function setupScrollButton(container: HTMLElement): void {
   const btn = document.createElement('button');
   btn.id = 'scroll-bottom-btn';
@@ -1277,6 +1295,46 @@ function attachEventListeners() {
   sendBtn?.addEventListener('click', sendMessage);
   let lastEscapeTime = 0;
   input?.addEventListener('keydown', (e: KeyboardEvent) => {
+    // Keyboard navigation keys forwarding when autocomplete is not active
+    if (!autocompleteActive) {
+      const history = document.getElementById('chat-history');
+      if (history) {
+        const lineScrollAmount = 40;
+        const pageScrollAmount = history.clientHeight - 40;
+
+        if (e.key === 'PageDown') {
+          e.preventDefault();
+          history.scrollTop += pageScrollAmount;
+          return;
+        }
+        if (e.key === 'PageUp') {
+          e.preventDefault();
+          history.scrollTop -= pageScrollAmount;
+          return;
+        }
+        if (e.key === 'ArrowUp' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          history.scrollTop -= lineScrollAmount;
+          return;
+        }
+        if (e.key === 'ArrowDown' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          history.scrollTop += lineScrollAmount;
+          return;
+        }
+        if (e.key === 'Home' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          history.scrollTop = 0;
+          return;
+        }
+        if (e.key === 'End' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          history.scrollTop = history.scrollHeight;
+          return;
+        }
+      }
+    }
+
     // 1. Shift+Tab: cycle permission mode
     if (e.key === 'Tab' && e.shiftKey) {
       e.preventDefault();
@@ -1485,6 +1543,61 @@ function attachEventListeners() {
         const path = pathEl.textContent?.replace(/^▶ /, '').trim();
         if (path) sendAction('open-context-file', { path });
       }
+    }
+  });
+
+  // Global keyboard scrolling listener
+  window.addEventListener('keydown', (e: KeyboardEvent) => {
+    // If the user is currently typing in an input or textarea, let the element handle it.
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as HTMLElement).isContentEditable)) {
+      return;
+    }
+
+    const scrollContainer = getActiveScrollContainer();
+    if (!scrollContainer) return;
+
+    const lineScrollAmount = 40;
+    const pageScrollAmount = scrollContainer.clientHeight - 40;
+
+    let handled = false;
+    switch (e.key) {
+      case 'ArrowUp':
+        scrollContainer.scrollTop -= lineScrollAmount;
+        handled = true;
+        break;
+      case 'ArrowDown':
+        scrollContainer.scrollTop += lineScrollAmount;
+        handled = true;
+        break;
+      case 'PageUp':
+        scrollContainer.scrollTop -= pageScrollAmount;
+        handled = true;
+        break;
+      case 'PageDown':
+        scrollContainer.scrollTop += pageScrollAmount;
+        handled = true;
+        break;
+      case ' ': // Space key
+        if (e.shiftKey) {
+          scrollContainer.scrollTop -= pageScrollAmount;
+        } else {
+          scrollContainer.scrollTop += pageScrollAmount;
+        }
+        handled = true;
+        break;
+      case 'Home':
+        scrollContainer.scrollTop = 0;
+        handled = true;
+        break;
+      case 'End':
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        handled = true;
+        break;
+    }
+
+    if (handled) {
+      e.preventDefault();
     }
   });
 }

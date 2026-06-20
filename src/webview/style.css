@@ -7,6 +7,25 @@
   --font-mono: var(--vscode-editor-font-family), monospace;
 }
 
+/* Global Themed Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.7));
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--vscode-scrollbarSlider-activeBackground, rgba(0, 0, 0, 0.6));
+}
+
+
 body {
   padding: 0;
   margin: 0;
@@ -103,11 +122,7 @@ body::after {
   z-index: 3;
 }
 
-/* Custom Scrollbar */
-.chat-history::-webkit-scrollbar { width: 8px; }
-.chat-history::-webkit-scrollbar-track { background: var(--bg-color); border-left: 1px solid var(--border-color); }
-.chat-history::-webkit-scrollbar-thumb { background: var(--border-color); }
-.chat-history::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
 
 .message {
   padding: 10px;
@@ -339,9 +354,7 @@ button:hover::before {
   gap: 4px;
 }
 
-.session-list::-webkit-scrollbar { width: 6px; }
-.session-list::-webkit-scrollbar-track { background: var(--bg-color); }
-.session-list::-webkit-scrollbar-thumb { background: var(--border-color); }
+
 
 .session-item {
   display: flex;
@@ -842,12 +855,7 @@ button:hover::before {
   color: #6a9955;
 }
 
-/* ─── SIDEBAR SCROLLBAR ────────────────────────── */
 
-.sidebar::-webkit-scrollbar { width: 6px; }
-.sidebar::-webkit-scrollbar-track { background: var(--bg-color); }
-.sidebar::-webkit-scrollbar-thumb { background: var(--border-color); }
-.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* ─── AUTOCOMPLETE POPOVER ─────────────────────── */
 

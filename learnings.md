@@ -139,4 +139,8 @@ To install and run this extension:
 ## Package Manager Gap Analysis (v0.1.9)
 - **Decoupled Dependency Storage**: Physical place-oriented copying of dependencies inside local project `node_modules` folders complects disk usage with workspace layouts. Standardizing on `pnpm` decouples project trees from physical files by storing packages exactly once in a machine-wide content-addressable storage pool, mapping them into projects via symlinks while preserving native Node resolution algorithms.
 
+## Accessible Webview Scrolling and Event Interception (v0.2.0)
+- **Decoupled Navigational Key Interception**: Typing text and scrolling are distinct developer concerns. By intercepting keydown events (`PageUp`/`PageDown`/`Ctrl+Arrows`) inside the chat input textarea and programmatically adjusting the scroll position of the chat history, we unentangled keyboard scrolling from textarea focus.
+- **Focus Dead-Zones Resolution**: Clicking neutral headers/footers/backgrounds focus the body element, which has `overflow: hidden`, breaking default keyboard scrolling. Implementing a global window keydown listener mapped to `getActiveScrollContainer()` forwards keyboard navigation keys to the active panel's scroll container.
+- **Theme-Decoupled Visual Scrollbars**: Styling custom scrollbars with arbitrary colors breaks contrast in different VS Code theme settings. Moving custom scrollbar CSS rules to target VS Code's native variable tokens (`--vscode-scrollbarSlider-*`) restores perfect visual contrast dynamically.
 

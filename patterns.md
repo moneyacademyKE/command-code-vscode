@@ -185,4 +185,11 @@
 - **Context**: Storing project dependencies physically inside every local project folder (`node_modules`) duplication (npm/bun) or using complex runtime zip loaders (Yarn PnP) complects workspace structure with file storage location. This wastes disk space and makes builds unpredictable.
 - **Solution**: Standardize on `pnpm` to decouple dependency storage from project layouts. Store dependencies in a shared content-addressable global pool and link them into project workspaces using read-only symlinks, preserving native Node resolution compatibility.
 
+---
+
+## Decoupled Keyboard Scroll Forwarding Pattern
+- **Context**: In rich webviews containing text inputs (like chat textareas), typing and scrolling are distinct user concerns. Allowing the input element to consume all scroll keys traps focus and requires mouse interaction to scroll. Furthermore, clicking neutral areas focuses the `body` element which is styled with `overflow: hidden`, breaking standard browser keyboard scrolling.
+- **Solution**: Intercept navigation keys (`PageUp`, `PageDown`, `Ctrl+Arrows`) inside the input element keydown listener and programmatically scroll the target container. Add a global window keydown listener mapped to `getActiveScrollContainer()` to forward key scrolling events to the active container when focus is on non-input elements (e.g. `BODY`). Ensure visual scrollbars reference native VS Code CSS variable tokens to automatically adapt color contrast.
+
+
 

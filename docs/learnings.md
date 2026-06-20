@@ -73,3 +73,8 @@ We evaluated adding SolidJS and Partytown to the VS Code Webview to handle UI re
 ### 16. VS Code Mock-Driven Activation Testing
 - **The Complected Way:** Testing extension activation by launching a full VS Code Extension Development Host instance for simple unit testing. This is slow, resource-heavy, and difficult to automate in headless environments.
 - **The Simple Way:** Mock-Driven Unit Testing. By providing a comprehensive mock of the `vscode` namespace in Vitest (including constructor classes like `RelativePattern`, `Position`, `Range`, `WorkspaceEdit` and events returning `{ dispose: vi.fn() }`), we can run extension activation synchronously in milliseconds and verify all register commands/providers without any IDE overhead.
+
+### 17. Accessible Webview Scrolling and Event Interception
+- **The Complected Way:** Hardcoding custom scrollbar styles that break visibility in different themes, and allowing the text area input to block scrolling keys.
+- **The Simple Way:** Map custom scrollbar styles to VS Code native CSS variables to automatically support contrast across light/dark themes. Implement a lightweight global keydown router that forwards navigation keys from the textarea input and global body element to the active panel's scroll container.
+

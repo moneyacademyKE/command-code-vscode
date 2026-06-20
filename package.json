@@ -3,7 +3,7 @@
   "name": "cmd-lite",
   "displayName": "CMD Lite",
   "description": "A coding agent with taste. Wrap the Command Code (`cmd`) CLI as a native VS Code experience.",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "publisher": "moneyacademyke",
   "license": "MIT",
   "repository": {
