@@ -10,7 +10,16 @@ import { ContextProvider } from "../context/provider";
 vi.mock("vscode", () => {
   return {
     window: {
-      createOutputChannel: () => ({ appendLine: vi.fn(), dispose: vi.fn() }),
+      createOutputChannel: () => ({
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        trace: vi.fn(),
+        clear: vi.fn(),
+        show: vi.fn(),
+        dispose: vi.fn(),
+      }),
     },
   };
 });
@@ -117,4 +126,47 @@ describe("IPCServer Integration", () => {
       client.on("error", reject);
     });
   });
+
+  it("should return PARSE_ERROR for invalid request payloads", () => {
+    return new Promise<void>((resolve, reject) => {
+      const client = net.createConnection(socketPath);
+      client.on("connect", () => {
+        client.write(JSON.stringify({
+          type: "auth",
+          token: "test-token"
+        }) + "\n");
+        // Malformed request payload missing the 'action' field
+        client.write(JSON.stringify({
+          type: "request",
+          id: "req-3",
+          payload: { missingAction: true }
+        }) + "\n");
+      });
+
+      let buffer = "";
+      client.on("data", (data) => {
+        buffer += data.toString();
+        // Since we write auth and request quickly, wait for second response or search buffer
+        const lines = buffer.split("\n");
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const response = JSON.parse(line);
+            if (response.id === "req-3") {
+              expect(response.type).toBe("error");
+              expect(response.payload.code).toBe("PARSE_ERROR");
+              expect(response.payload.message).toContain("Invalid request payload structure");
+              client.end();
+              resolve();
+              return;
+            }
+          } catch {
+            // ignore partial JSON parse errors
+          }
+        }
+      });
+      client.on("error", reject);
+    });
+  });
 });
+

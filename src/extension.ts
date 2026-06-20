@@ -46,6 +46,7 @@ import { CmdMcpServer } from "./mcp/server";
 import { diffProposeTool } from "./mcp/tools/diff";
 import { terminalTool } from "./mcp/tools/terminal";
 import { generateMcpConfig } from "./mcp/config";
+import { Logger } from "./logger";
 
 let currentSessionId: string | null = null;
 let currentIdeName: string | null = null;
@@ -156,14 +157,7 @@ async function handleWebviewAction(
   }
 }
 
-export function activate(context: vscode.ExtensionContext): void {
-  const cliPath = resolveCliPath();
-
-  void vscode.window.setStatusBarMessage(
-    `Command Code extension loaded (cli: ${cliPath})`,
-    3000,
-  );
-
+function validateAndCheckCli(cliPath: string): void {
   const validation = validateCliPath(cliPath);
   if (!validation.valid) {
     vscode.window.showErrorMessage(
@@ -191,8 +185,19 @@ export function activate(context: vscode.ExtensionContext): void {
       });
     }
   }
+}
 
-  const outputChannel = vscode.window.createOutputChannel("Command Code");
+export function activate(context: vscode.ExtensionContext): void {
+  const cliPath = resolveCliPath();
+
+  void vscode.window.setStatusBarMessage(
+    `Command Code extension loaded (cli: ${cliPath})`,
+    3000,
+  );
+
+  validateAndCheckCli(cliPath);
+
+  Logger.initialize("Command Code");
 
   const statusBar = new StatusBar();
   if (showStatusBarEnabled()) statusBar.show();
@@ -217,7 +222,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
         // Handle direct Bash execution mode
         if (input.payload?.isBash) {
-          outputChannel.appendLine(`[webview] bash command received: ${prompt}`);
+          Logger.info(`[webview] bash command received: ${prompt}`);
           const msgId = `bash-${Date.now()}`;
           chatProvider.dispatchEvent({
             jsonrpc: "2.0",
@@ -266,7 +271,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        outputChannel.appendLine(`[webview] chatInput received: ${prompt.slice(0, 80)}`);
+        Logger.info(`[webview] chatInput received: ${prompt.slice(0, 80)}`);
         let streamedAny = false;
         const msgId = `agent-${Date.now()}`;
 
@@ -303,7 +308,7 @@ export function activate(context: vscode.ExtensionContext): void {
             signal: activeAbortController.signal,
           });
 
-          outputChannel.appendLine(`[webview] runPrint done: exit=${result.exitCode}, stdout=${result.stdout.length}b, streamed=${streamedAny}`);
+          Logger.info(`[webview] runPrint done: exit=${result.exitCode}, stdout=${result.stdout.length}b, streamed=${streamedAny}`);
 
           // Fallback: if nothing streamed but stdout has content, send it now
           if (!streamedAny && result.stdout.trim()) {
@@ -352,7 +357,7 @@ export function activate(context: vscode.ExtensionContext): void {
           }
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
-          outputChannel.appendLine(`[webview] runPrint error: ${message}`);
+          Logger.error(`[webview] runPrint error: ${message}`);
           chatProvider.dispatchEvent({
             jsonrpc: "2.0",
             method: "webview/dispatchEvent",
@@ -410,9 +415,9 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   registerTasteWatcher(context, tasteProvider);
-  registerTasteCommands(context, tasteProvider, outputChannel);
+  registerTasteCommands(context, tasteProvider, Logger.instance);
   initializePermissionStore(context);
-  registerSessionCommands(context, statusBar, sessionProvider, outputChannel, chatProvider);
+  registerSessionCommands(context, statusBar, sessionProvider, Logger.instance, chatProvider);
   registerChatParticipant(context);
   registerLmTools(context);
 
@@ -506,9 +511,9 @@ export function activate(context: vscode.ExtensionContext): void {
         );
 
         const formatted = formatParallelResults(results);
-        outputChannel.clear();
-        outputChannel.appendLine(formatted);
-        outputChannel.show(true);
+        Logger.clear();
+        Logger.info(formatted);
+        Logger.show(true);
       } finally {
         statusBar.setBusy(false);
       }
@@ -535,7 +540,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push({
     dispose: () => {
       statusBar.hide();
-      outputChannel.dispose();
+      Logger.dispose();
     },
   });
 
@@ -543,6 +548,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("cmd-lite.cliPath")) {
         clearCliPathCache();
+        const newCliPath = resolveCliPath();
+        validateAndCheckCli(newCliPath);
       }
       if (e.affectsConfiguration("cmd-lite.showStatusBar")) {
         if (showStatusBarEnabled()) statusBar.show();
@@ -620,17 +627,11 @@ export function activate(context: vscode.ExtensionContext): void {
           authToken,
         );
       } catch (error) {
-        console.error(
-          "CommandCode: failed to write session file:",
-          error,
-        );
+        Logger.error("CommandCode: failed to write session file:", error);
       }
     })
     .catch((error) => {
-      console.error(
-        "CommandCode: IPC server failed to start:",
-        error,
-      );
+      Logger.error("CommandCode: IPC server failed to start:", error);
       vscode.window.showErrorMessage(
         "CommandCode: Failed to start context server. CLI integration may not work.",
       );

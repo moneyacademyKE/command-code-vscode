@@ -23,6 +23,28 @@ export function isAuthMessage(msg: unknown): msg is AuthMessage {
   );
 }
 
+export function isIpcRequest(msg: unknown): msg is IpcRequest {
+  if (msg === null || typeof msg !== "object") return false;
+  const record = msg as Record<string, unknown>;
+  if (record.type !== "request") return false;
+  if (typeof record.id !== "string") return false;
+  
+  const payload = record.payload as Record<string, unknown> | undefined;
+  if (payload === null || typeof payload !== "object") return false;
+  if (typeof payload.action !== "string") return false;
+  
+  if (payload.filePaths !== undefined) {
+    if (!Array.isArray(payload.filePaths)) return false;
+    if (!payload.filePaths.every((f) => typeof f === "string")) return false;
+  }
+  if (payload.filePath !== undefined && typeof payload.filePath !== "string") {
+    return false;
+  }
+  
+  return true;
+}
+
+
 export type IpcAction =
   (typeof IPC_ACTIONS)[keyof typeof IPC_ACTIONS];
 

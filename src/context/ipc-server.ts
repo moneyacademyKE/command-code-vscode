@@ -13,7 +13,9 @@ import {
   MAX_MESSAGE_BYTES,
   MAX_CONNECTIONS,
   IDLE_TIMEOUT_MS,
+  isIpcRequest,
 } from "./protocol";
+import { Logger } from "../logger";
 
 function createErrorResponse(
   id: string,
@@ -79,7 +81,6 @@ export class IPCServer implements vscode.Disposable {
   private readonly contextProvider: ContextProvider;
   private readonly socketPath: string;
   private readonly authToken: string;
-  private readonly outputChannel: vscode.OutputChannel;
   private server: net.Server | null = null;
   private connections = new Set<net.Socket>();
   private authenticatedSockets = new Set<net.Socket>();
@@ -94,19 +95,10 @@ export class IPCServer implements vscode.Disposable {
     this.contextProvider = contextProvider;
     this.socketPath = socketPath;
     this.authToken = authToken;
-    this.outputChannel = vscode.window.createOutputChannel(
-      "CommandCode Context",
-    );
   }
 
   private log(message: string): void {
-    const timestamp = new Date()
-      .toISOString()
-      .split("T")[1]
-      .slice(0, 12);
-    this.outputChannel.appendLine(
-      `[${timestamp}] ${message}`,
-    );
+    Logger.info(`[IPC] ${message}`);
   }
 
   setWebviewDispatcher(dispatcher: (eventPayload: unknown) => void): void {
@@ -288,12 +280,21 @@ export class IPCServer implements vscode.Disposable {
       return;
     }
 
-    if (
-      typeof message !== "object" ||
-      message === null ||
-      (message as Record<string, unknown>).type !== "request"
-    ) return;
-    await this.handleRequest(socket, message as unknown as IpcRequest);
+    if (typeof message === "object" && message !== null && (message as Record<string, unknown>).type === "request") {
+      if (!isIpcRequest(message)) {
+        this.log("Invalid IPC request payload format.");
+        const errorResponse = createErrorResponse(
+          typeof (message as Record<string, unknown>).id === "string" 
+            ? ((message as Record<string, unknown>).id as string) 
+            : crypto.randomUUID(),
+          "Invalid request payload structure",
+          "PARSE_ERROR",
+        );
+        this.sendMessage(socket, errorResponse);
+        return;
+      }
+      await this.handleRequest(socket, message);
+    }
   }
 
   private async handleRequest(
@@ -422,6 +423,5 @@ export class IPCServer implements vscode.Disposable {
     }
     this.connections.clear();
     this.server?.close();
-    this.outputChannel.dispose();
   }
 }
