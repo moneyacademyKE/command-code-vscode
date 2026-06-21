@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- **Interactive Onboarding UI**: Replaced empty state with a glassmorphic onboarding welcome card inside chat histories, showing ASCII logos, quick action commands, and keyboard shortcut maps.
+- **Autonomous Diagnostics Fixing (`/fix`)**: Intercepts `/fix` prompts, aggregates active workspace diagnostics (ignoring build/dependency directories like `node_modules` or `dist`), prioritizes Errors over Warnings, caps to 30 issues to prevent token bloat, and feeds them into the standard CLI execution loop. Adds a `🔧 FIX` sidebar button.
+- **Workspace Path Setting Interpolation**: Automatically expands `${workspaceFolder}` and resolves relative paths inside the local registry path configurations.
+- **Optimized Local Auto-Updates**: Downloads and copies CLI packages locally using offline filesystem streams under `"cmd-lite.localRegistryPath"`, and skips production dependency setup if the target package has no dependencies.
+
 ## 0.4.0
 
 - **Local CLI Dependency Isolation**: Configured CMD Lite to download and run the CLI package inside a private `globalStorageUri` cache directory (`~/.commandcode/cli/`) by default, preventing EACCES write errors and shell PATH configuration conflicts with global package installs.
