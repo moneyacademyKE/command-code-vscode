@@ -503,8 +503,6 @@ marked.use({
 
 // ─── Smart Scroll ─────────────────────────────────
 
-let wasNearBottom = true;
-
 function isNearBottom(el: HTMLElement, threshold = 150): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
 }
@@ -536,43 +534,44 @@ function getActiveScrollContainer(): HTMLElement | null {
 
 
 function setupScrollButton(container: HTMLElement): void {
+  // Store the state locally on the container element to avoid global state entanglement
+  (container as any).wasNearBottom = true;
+
   const btn = document.createElement('button');
-  btn.id = 'scroll-bottom-btn';
+  btn.id = container.id + '-scroll-bottom-btn';
   btn.className = 'scroll-bottom-btn';
   btn.textContent = '\u25BC BOTTOM';
   btn.addEventListener('click', () => {
-    wasNearBottom = true;
+    (container as any).wasNearBottom = true;
     scrollToBottom(container);
   });
   container.parentElement?.appendChild(btn);
 
   let lastScrollTop = container.scrollTop;
-  let lastScrollHeight = container.scrollHeight;
 
   // Scroll listener to update state and toggle button visibility
   container.addEventListener('scroll', () => {
     const currentScrollTop = container.scrollTop;
-    const currentScrollHeight = container.scrollHeight;
 
-    // If the scrollHeight changed but scrollTop didn't, this is a content resize / layout reflow.
-    // We should NOT count this as a user scroll event.
-    if (currentScrollHeight !== lastScrollHeight && currentScrollTop === lastScrollTop) {
-      lastScrollHeight = currentScrollHeight;
-      return;
+    if (isNearBottom(container)) {
+      (container as any).wasNearBottom = true;
+    } else if (currentScrollTop < lastScrollTop) {
+      // User scrolled UP and is NOT near bottom
+      (container as any).wasNearBottom = false;
+    } else if (currentScrollTop > lastScrollTop) {
+      // User scrolled DOWN and is NOT near bottom
+      (container as any).wasNearBottom = false;
     }
 
-    const near = isNearBottom(container);
-    wasNearBottom = near;
-    btn.classList.toggle('visible', !near);
+    btn.classList.toggle('visible', !(container as any).wasNearBottom);
 
     lastScrollTop = currentScrollTop;
-    lastScrollHeight = currentScrollHeight;
   });
 
   // Watch for any DOM changes inside the container (appended messages, syntax highlights, streaming text)
   if (typeof MutationObserver !== 'undefined') {
     const observer = new MutationObserver(() => {
-      if (wasNearBottom) {
+      if ((container as any).wasNearBottom) {
         scrollToBottom(container);
       }
     });
@@ -587,7 +586,7 @@ function setupScrollButton(container: HTMLElement): void {
   container.addEventListener('load', (e) => {
     const target = e.target as HTMLElement;
     if (target && target.tagName === 'IMG') {
-      if (wasNearBottom) {
+      if ((container as any).wasNearBottom) {
         scrollToBottom(container);
       }
     }
@@ -969,9 +968,9 @@ function appendMessage(m: { id: string; role: string; content: string }, streami
 
   // Determine if we were at the bottom before mutating the DOM
   if (m.role === 'user') {
-    wasNearBottom = true;
+    (history as any).wasNearBottom = true;
   }
-  const shouldScroll = wasNearBottom || isNearBottom(history);
+  const shouldScroll = (history as any).wasNearBottom || isNearBottom(history);
 
   let div = document.getElementById(m.id);
   if (!div) {
@@ -1012,7 +1011,7 @@ function appendMessage(m: { id: string; role: string; content: string }, streami
   }
 
   if (shouldScroll) {
-    wasNearBottom = true;
+    (history as any).wasNearBottom = true;
     scrollToBottom(history);
   }
 }
@@ -1339,8 +1338,11 @@ function attachEventListeners() {
 
         if (cmd === '/clear') {
           state.messages = [];
+          state.statusText = '';
+          state.agents = [];
           saveState();
           hydrateUI();
+          sendAction('clear-session');
           return;
         }
 
@@ -1977,6 +1979,8 @@ function initUI() {
 
   const chatHistory = document.getElementById('chat-history');
   if (chatHistory) setupScrollButton(chatHistory);
+  const statusContent = document.getElementById('status-content');
+  if (statusContent) setupScrollButton(statusContent);
 
   // Restore state if it exists
   const previousState = vscode.getState() as Partial<typeof state> | null;
@@ -2123,6 +2127,17 @@ window.addEventListener('message', (event: MessageEvent) => {
             scrollToBottom(content);
           }
         }
+        break;
+      }
+
+      case 'ClearChat':
+      case 'ResetSession': {
+        state.messages = [];
+        state.statusText = '';
+        state.agents = [];
+        saveState();
+        hydrateUI();
+        switchPanel('chat');
         break;
       }
 

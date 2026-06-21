@@ -14,6 +14,9 @@ import { startInteractiveSession } from "../permission/interactive";
 import type { StatusBar } from "./statusBar";
 import { type SessionTreeProvider, type SessionTreeItem, getJsonlPathForSession } from "./sessionView";
 import type { ChatViewProvider } from "../webview/ChatViewProvider";
+import { SessionManager } from "../sessionManager";
+
+const session = SessionManager.getInstance();
 
 export function registerSessionCommands(
   context: vscode.ExtensionContext,
@@ -27,6 +30,16 @@ export function registerSessionCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand("cmd-lite.start", () => {
       const cwd = getActiveCwd();
+      session.activeAbortController?.abort();
+      session.reset();
+      chatProvider.dispatchEvent({
+        jsonrpc: "2.0",
+        method: "webview/dispatchEvent",
+        params: {
+          type: "ResetSession",
+          payload: {}
+        }
+      });
       startInteractiveSession(extUri, { cwd, trust: true });
     }),
 
@@ -163,6 +176,11 @@ export function registerSessionCommands(
     vscode.commands.registerCommand("cmd-lite.login", () => {
       const cwd = getActiveCwd();
       const cliPath = resolveCliPath();
+      for (const t of vscode.window.terminals) {
+        if (t.name === "Command Code") {
+          t.dispose();
+        }
+      }
       const terminal = vscode.window.createTerminal({
         name: "Command Code",
         cwd,

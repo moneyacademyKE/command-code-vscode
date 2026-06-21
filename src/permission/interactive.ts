@@ -98,6 +98,11 @@ export async function runWithPermissionGate(
 function launchTerminal(cwd: string, options: StartSessionOptions): void {
   const cliPath = resolveCliPath();
   const args = buildSessionArgs(options);
+  for (const t of vscode.window.terminals) {
+    if (t.name === "Command Code") {
+      t.dispose();
+    }
+  }
   const terminal = vscode.window.createTerminal({
     name: "Command Code",
     cwd,

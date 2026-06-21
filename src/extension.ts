@@ -66,6 +66,15 @@ async function handleWebviewAction(
     case "start":
       vscode.commands.executeCommand("cmd-lite.start");
       break;
+    case "clear-session":
+      session.activeAbortController?.abort();
+      session.reset();
+      for (const t of vscode.window.terminals) {
+        if (t.name === "Command Code") {
+          t.dispose();
+        }
+      }
+      break;
     case "continue":
       vscode.commands.executeCommand("cmd-lite.continue");
       break;

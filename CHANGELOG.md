@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.2
+
+- **Layout-Shift Resilient Auto-Scrolling**: Implemented direction-aware scroll check (`currentScrollTop < lastScrollTop` to pause, `isNearBottom` to resume) to prevent async reflows (like syntax highlights or image loads) from breaking auto-scroll.
+- **Decomplected Multi-Viewport Scrolling State**: Swapped the global `wasNearBottom` boolean for element-local properties (`(container as any).wasNearBottom`), allowing the main chat history and the streaming status console to scroll independently.
+- **Status Console Smart Scroll & Button**: Wrapped the `#status-content` panel with `setupScrollButton()` and styled its scroll button with `bottom: 20px` for optimal placement.
+- **Clean Session Resets & Terminal Disposal**: Added query loops to find and `.dispose()` any existing `"Command Code"` terminal shell windows before launching a new terminal, preventing duplicate processes. Wired the webview `ResetSession` IPC event and `'clear-session'` actions to cleanse view states instantly.
+
 ## 0.5.1
 
 - **Onboarding Start Session Button Polish**: Decomplected visual styles from inline properties to `.onboarding-start-session-btn` in `style.css`.

@@ -314,6 +314,28 @@ describe("webview visual parity regression prevention", () => {
     });
   });
 
+  // ── Session Reset & Resilient Scrolling ──
+  describe("session reset and resilient scrolling parity", () => {
+    it("handles ResetSession and ClearChat webview events", () => {
+      expect(mainSrc).toContain("case 'ResetSession':");
+      expect(mainSrc).toContain("case 'ClearChat':");
+    });
+
+    it("has status content scroll bottom button styling in style.css", () => {
+      expect(css).toContain("#status-content-scroll-bottom-btn");
+      expect(css).toContain("bottom: 20px !important");
+    });
+
+    it("has setupScrollButton on status content", () => {
+      expect(mainSrc).toContain("setupScrollButton(statusContent)");
+    });
+
+    it("uses direction-aware scroll check instead of simple threshold checks", () => {
+      expect(mainSrc).toContain("currentScrollTop < lastScrollTop");
+      expect(mainSrc).toContain("currentScrollTop > lastScrollTop");
+    });
+  });
+
   // ── Streaming Status ──
   describe("streaming status parity", () => {
     it("has Hypothesizing status line", () => {

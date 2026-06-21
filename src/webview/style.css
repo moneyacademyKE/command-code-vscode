@@ -857,6 +857,10 @@ button:hover::before {
   display: none;
 }
 
+#status-content-scroll-bottom-btn {
+  bottom: 20px !important;
+}
+
 /* Streaming cursor blink in footer */
 .streaming-indicator {
   flex: 1;
