@@ -171,5 +171,11 @@ To install and run this extension:
 - **Style Decomplecting for Webview Controls**: Storing large style declarations inline within TS/JS DOM elements complects presentation with structure, complicating changes and theme-based styling. Shifting style rules to `style.css` decoupling visual parameters enables rich CSS features like `:hover` scaling, active tap transitions, and focus rings to work seamlessly.
 - **Accurate Webview Regression Assertions**: Simulating visual state behaviors of webviews during testing is simplified by verifying HTML templates, class mappings, action bindings, and CSS declarations directly from source files using regression test suites. This prevents compilation and layout regressions without loading heavy browser instances during unit testing.
 
+## Session Reset and Resilient Scrolling (v0.5.2)
+- **Direction-Aware Scroll Verification**: Viewport auto-scrolling is complected when absolute threshold checks trigger scroll pausing during async layout changes (like syntax highlighting or image loading). By verifying the scroll direction and only pausing auto-scroll when scroll position explicitly moves upward (`currentScrollTop < lastScrollTop`), reflow expansions are ignored, ensuring resilient scrolling.
+- **Decomplecting Scrolling States**: Using global state variables to track auto-scroll properties complects multiple scrollable viewports. Shuffling state properties directly onto the DOM container objects (`(container as any).wasNearBottom`) isolates scrolling, enabling independent scroll behavior in both the chat panel and the streaming status logs console.
+- **Background Terminal Garbage Collection**: Retaining old terminal windows when starting new interactive sessions leaks CLI process loops and UDS socket handles. Querying and disposing of existing terminals with matching names (`Command Code`) before spawning new instances ensures a clean session reset.
+
+
 
 

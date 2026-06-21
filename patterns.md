@@ -245,6 +245,25 @@
 - **Context**: Mixing inline CSS styling in dynamic webview JavaScript/TypeScript templates complects layout layout/structure with presentation rules. This complicates matching host editor theme variables, adjusting layout offsets, and defining interactive visual feedback like scaling or glow shadows.
 - **Solution**: Decomplect presentation from structure by removing inline styles and organizing all components into styled classes in a standalone CSS sheet (`style.css`). This enables full utilization of standard CSS features like `:hover` scaling, active tap transitions, and focus visible outlines mapped to native VS Code variable tokens (such as `--vscode-focusBorder`).
 
+---
+
+## Direction-Aware Scroll Anchoring Pattern
+- **Context**: Auto-scrolling in streaming webviews is complected when absolute distance checks are used to toggle scroll pausing. When asynchronous layout reflows (like syntax highlighting or image loading) occur, the scroll viewport height changes. If checked immediately, the scroll position is far from the bottom, causing the system to mistakenly assume the user scrolled up, which permanently disables auto-scroll.
+- **Solution**: Decomplect user scrolling from content reflowing by analyzing scroll direction. Only pause auto-scrolling if the scroll position explicitly moves upward (`currentScrollTop < lastScrollTop`). If the user scrolls down near the bottom (`isNearBottom`), auto-scrolling is re-enabled. If the scroll position is unchanged, it is treated as a content reflow, preserving the current auto-scroll state.
+
+---
+
+## Decomplected Scrolling State Pattern
+- **Context**: Tracking auto-scroll properties via shared global variables complects different scroll viewports (like chat history vs. streaming terminal logs), causing scroll events in one view to corrupt the auto-scroll settings of other viewports.
+- **Solution**: Store state properties directly on the HTMLElement DOM objects (e.g. `(container as any).wasNearBottom`). This fully unentangles the viewport state, allowing the chat panel and the streaming logs console to scroll independently without interference.
+
+---
+
+## Process Disposal Session Reset Pattern
+- **Context**: Resetting active interactive sessions in IDE extensions without terminating the old terminal shells leaks background processes, CLI event loops, and locks local UDS socket handles.
+- **Solution**: Prior to launching a new interactive terminal, query the workspace terminals list, filter by name, and call `.dispose()` on matching terminals to terminate background shells. Simultaneously, dispatch clean state reset events to the webview to reset local data layers cleanly.
+
+
 
 
 
