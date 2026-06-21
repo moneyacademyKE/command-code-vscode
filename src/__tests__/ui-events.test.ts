@@ -30,6 +30,10 @@ function claimUiLock() {
   };
 }
 
+function resetSession() {
+  return makeUiEvent("ResetSession", {});
+}
+
 describe("UI Payload Tests", () => {
   it("RenderMessage event generation", () => {
     const evt = renderMessage("msg-1", "user", "Math calculation: 1+1");
@@ -56,5 +60,11 @@ describe("UI Payload Tests", () => {
     const evt = claimUiLock();
     expect(evt.type).toBe("request");
     expect(evt.payload.action).toBe("claimUiLock");
+  });
+
+  it("ResetSession event generation", () => {
+    const evt = resetSession();
+    expect(evt.method).toBe("webview/dispatchEvent");
+    expect(evt.params.type).toBe("ResetSession");
   });
 });
