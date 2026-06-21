@@ -176,6 +176,10 @@ To install and run this extension:
 - **Decomplecting Scrolling States**: Using global state variables to track auto-scroll properties complects multiple scrollable viewports. Shuffling state properties directly onto the DOM container objects (`(container as any).wasNearBottom`) isolates scrolling, enabling independent scroll behavior in both the chat panel and the streaming status logs console.
 - **Background Terminal Garbage Collection**: Retaining old terminal windows when starting new interactive sessions leaks CLI process loops and UDS socket handles. Querying and disposing of existing terminals with matching names (`Command Code`) before spawning new instances ensures a clean session reset.
 
+## CLI Executable Path Quoting & Automated Visual Verification (v0.5.3)
+- **Space-Containing Executable Paths**: On systems where user directories contain space characters (such as macOS's `Application Support`), terminal executables split arguments on whitespace unless the path itself is quoted. Wrapping the resolved `cliPath` in double quotes (`"${cliPath}"`) before terminal execution prevents shell word splitting crashes (such as `zsh: no such file or directory` or `exit code 127`).
+- **Automated Visual UI Verification**: Visual state checks like auto-scrolling and session resets are highly timing-sensitive. Leveraging a Clojure/Babashka script to execute `osascript` AppleScript GUI automation (focusing views, triggering command palette commands, typing queries, and capturing phase-based screen captures) enables reliable, repeatable end-to-end user experience verification.
+
 
 
 

@@ -263,6 +263,18 @@
 - **Context**: Resetting active interactive sessions in IDE extensions without terminating the old terminal shells leaks background processes, CLI event loops, and locks local UDS socket handles.
 - **Solution**: Prior to launching a new interactive terminal, query the workspace terminals list, filter by name, and call `.dispose()` on matching terminals to terminate background shells. Simultaneously, dispatch clean state reset events to the webview to reset local data layers cleanly.
 
+---
+
+## Double-Quoted Executable Launching Pattern
+- **Context**: When launching commands or sub-processes in a system terminal shell (such as Zsh, Bash, or Command Prompt), paths with spaces are split into multiple arguments, resulting in shell crashes (e.g. `zsh: no such file or directory` or command not found) and execution failures.
+- **Solution**: Wrap the resolved executable path in double quotes (`"${cliPath}"`) before constructing the command string to send to the terminal interface. This ensures the command shell treats the path as a single executable token.
+
+---
+
+## Automated AppleScript Visual Testing Pattern
+- **Context**: Visual and keyboard-interactive features in IDE extensions (like auto-scrolling and session refresh) are difficult to test with conventional headless unit/integration test suites.
+- **Solution**: Create a Babashka script that activates the target IDE via AppleScript (`tell application ... to activate`), simulates keypresses to focus views and trigger commands, types text prompts, waits for rendering/streaming, simulates scrolling keys, and takes phase-based screenshots using `screencapture` to verify states visually.
+
 
 
 

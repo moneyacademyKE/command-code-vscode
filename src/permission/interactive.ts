@@ -107,6 +107,6 @@ function launchTerminal(cwd: string, options: StartSessionOptions): void {
     name: "Command Code",
     cwd,
   });
-  terminal.sendText([cliPath, ...args].join(" "));
+  terminal.sendText([`"${cliPath}"`, ...args].join(" "));
   terminal.show();
 }

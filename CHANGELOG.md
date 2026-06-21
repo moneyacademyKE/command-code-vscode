@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3
+
+- **CLI Executable Path Quoting**: Wrapped the resolved CLI binary path in double quotes inside terminal execution commands to handle paths containing spaces (such as macOS's `Application Support`) safely, preventing shell word splitting errors.
+
 ## 0.5.2
 
 - **Layout-Shift Resilient Auto-Scrolling**: Implemented direction-aware scroll check (`currentScrollTop < lastScrollTop` to pause, `isNearBottom` to resume) to prevent async reflows (like syntax highlights or image loads) from breaking auto-scroll.

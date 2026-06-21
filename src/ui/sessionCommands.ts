@@ -185,7 +185,7 @@ export function registerSessionCommands(
         name: "Command Code",
         cwd,
       });
-      terminal.sendText(`${cliPath} login`);
+      terminal.sendText(`"${cliPath}" login`);
       terminal.show();
       sessionTree.refresh();
     }),
