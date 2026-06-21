@@ -1165,6 +1165,13 @@ function hydrateUI() {
         <div class="onboarding-tagline">Your autonomous coding agent with taste</div>
         
         <div class="onboarding-section">
+          <button class="onboarding-btn onboarding-start-session-btn" data-action="start">
+            <span class="btn-icon">▶</span>
+            <span class="btn-title">Start New Session</span>
+          </button>
+        </div>
+        
+        <div class="onboarding-section">
           <h3>Quick Actions</h3>
           <div class="onboarding-buttons">
             <button class="onboarding-btn" data-prompt="/fix">
@@ -1793,6 +1800,11 @@ function attachEventListeners() {
   onboardingChatHistory?.addEventListener('click', (e) => {
     const btn = (e.target as HTMLElement).closest('.onboarding-btn') as HTMLButtonElement | null;
     if (btn) {
+      const action = btn.dataset.action;
+      if (action === 'start') {
+        sendAction('start');
+        return;
+      }
       const promptVal = btn.dataset.prompt;
       if (promptVal) {
         const chatInput = document.getElementById('chat-input') as HTMLTextAreaElement | null;

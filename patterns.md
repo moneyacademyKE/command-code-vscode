@@ -239,5 +239,12 @@
 - **Context**: Forcing local updates to fetch from registry.npmjs.org limits developers from testing CLI changes locally and prevents offline extension upgrades.
 - **Solution**: Check if a local registry filesystem path setting is active. If set, read metadata versioning from `package.json` in that directory and copy package `.tgz` files using native filesystem APIs, fully bypassing HTTPS calls.
 
+---
+
+## Style Decomplecting for Webview Elements Pattern
+- **Context**: Mixing inline CSS styling in dynamic webview JavaScript/TypeScript templates complects layout layout/structure with presentation rules. This complicates matching host editor theme variables, adjusting layout offsets, and defining interactive visual feedback like scaling or glow shadows.
+- **Solution**: Decomplect presentation from structure by removing inline styles and organizing all components into styled classes in a standalone CSS sheet (`style.css`). This enables full utilization of standard CSS features like `:hover` scaling, active tap transitions, and focus visible outlines mapped to native VS Code variable tokens (such as `--vscode-focusBorder`).
+
+
 
 

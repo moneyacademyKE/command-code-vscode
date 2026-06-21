@@ -293,6 +293,27 @@ describe("webview visual parity regression prevention", () => {
     });
   });
 
+  // ── Onboarding Welcomer ──
+  describe("onboarding welcomer parity", () => {
+    it("renders Start New Session button on messages empty state", () => {
+      expect(mainSrc).toContain("onboarding-start-session-btn");
+      expect(mainSrc).toContain('data-action="start"');
+      expect(mainSrc).toContain("Start New Session");
+    });
+
+    it("has start session button styling defined in CSS", () => {
+      expect(css).toContain(".onboarding-start-session-btn");
+      expect(css).toContain("transform: scale(1.02)");
+      expect(css).toContain("transform: scale(0.98)");
+      expect(css).toContain(".onboarding-start-session-btn:focus-visible");
+    });
+
+    it("delegates click action start to sendAction", () => {
+      expect(mainSrc).toContain("action === 'start'");
+      expect(mainSrc).toContain("sendAction('start')");
+    });
+  });
+
   // ── Streaming Status ──
   describe("streaming status parity", () => {
     it("has Hypothesizing status line", () => {
