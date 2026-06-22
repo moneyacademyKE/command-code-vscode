@@ -622,6 +622,19 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("cmd-lite.focusChatInput", async () => {
+      await vscode.commands.executeCommand("cmd-lite.chatView.focus");
+      setTimeout(() => {
+        chatProvider.dispatchEvent({
+          jsonrpc: "2.0",
+          method: "webview/dispatchEvent",
+          params: {
+            type: "FocusInput",
+            payload: {}
+          }
+        });
+      }, 100);
+    }),
     vscode.commands.registerCommand("cmd-lite.model.pick", () => pickModel()),
     vscode.commands.registerCommand("cmd-lite.permission.pick", () =>
       pickPermissionMode(),

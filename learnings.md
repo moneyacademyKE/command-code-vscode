@@ -179,6 +179,7 @@ To install and run this extension:
 ## CLI Executable Path Quoting & Automated Visual Verification (v0.5.3)
 - **Space-Containing Executable Paths**: On systems where user directories contain space characters (such as macOS's `Application Support`), terminal executables split arguments on whitespace unless the path itself is quoted. Wrapping the resolved `cliPath` in double quotes (`"${cliPath}"`) before terminal execution prevents shell word splitting crashes (such as `zsh: no such file or directory` or `exit code 127`).
 - **Automated Visual UI Verification**: Visual state checks like auto-scrolling and session resets are highly timing-sensitive. Leveraging a Clojure/Babashka script to execute `osascript` AppleScript GUI automation (focusing views, triggering command palette commands, typing queries, and capturing phase-based screen captures) enables reliable, repeatable end-to-end user experience verification.
+- **Iframe Focus Handling for Webview Automation**: Standard OS-level keystroke scripts targeting webviews (like CMD Lite's custom Chat view) can fail to locate the target input area if multiple views of the same name (like native VS Code chat) are active, or if webview iframes capture focus ineffectively. Implementing a custom command `cmd-lite.focusChatInput` that calls the view's `.focus()` command and programmatically posts a `FocusInput` event to the webview textarea unentangles input targeting, guaranteeing reliable and repeatable keyboard-driven visual testing in webview panels.
 
 
 

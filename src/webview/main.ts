@@ -2141,6 +2141,14 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       }
 
+      case 'FocusInput': {
+        const input = document.getElementById('chat-input') as HTMLTextAreaElement | null;
+        if (input) {
+          input.focus();
+        }
+        break;
+      }
+
       case 'initState': {
         const { modelId, permissionMode, tokens, sessionId, turnCount, cliVersion, modelsLabel } =
           payload as {

@@ -238,6 +238,11 @@
         "title": "Restore Last Checkpoint",
         "category": "Command Code",
         "icon": "$(discard)"
+      },
+      {
+        "command": "cmd-lite.focusChatInput",
+        "title": "Focus Chat Input",
+        "category": "Command Code"
       }
     ],
     "configuration": {

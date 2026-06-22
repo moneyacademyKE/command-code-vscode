@@ -28,8 +28,8 @@
         -- Open command palette
         keystroke \"p\" using {command down, shift down}
         delay 1
-        -- Search for Chat View focus command
-        keystroke \"View: Focus on Chat View\"
+        -- Focus the webview chat input via our new focus command
+        keystroke \"Command Code: Focus Chat Input\"
         delay 1
         key code 36 -- Press Enter
         delay 2
@@ -52,13 +52,13 @@
   ;; Step 3: Send a long query to trigger streaming and scrolling
   (run-applescript
    "tell application \"System Events\"
-        -- Focus chat view input again to be sure
+        -- Focus chat view input again via our focus command
         keystroke \"p\" using {command down, shift down}
         delay 1
-        keystroke \"View: Focus on Chat View\"
+        keystroke \"Command Code: Focus Chat Input\"
         delay 1
         key code 36 -- Press Enter
-        delay 1
+        delay 2
         
         -- Type a prompt that produces long output to force scrolling
         keystroke \"Write a very long poem about gravity and Clojure containing at least 4 stanzas.\"

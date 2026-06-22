@@ -31,19 +31,28 @@
         keystroke \"Command Code: Start Command Code Session\"
         delay 1
         key code 36 -- Press Enter
-        delay 6 -- Wait for terminal to start and show 'Ask your question...'
+        delay 4 -- Wait for session initialization
     end tell")
 
-  ;; Step 2: Type prompt directly into the active/focused terminal
+  ;; Step 2: Focus the webview chat input via our new focus command
   (run-applescript
    "tell application \"System Events\"
+        -- Open command palette
+        keystroke \"p\" using {command down, shift down}
+        delay 1
+        -- Trigger Focus Chat Input command
+        keystroke \"Command Code: Focus Chat Input\"
+        delay 1
+        key code 36 -- Press Enter
+        delay 2 -- Wait for focus transition
+        
         -- Type the coding prompt
         keystroke \"In src/util/util.ts, add a utility function truncateString(str: string, maxLength: number): string that truncates a string and appends '...' if it exceeds maxLength. Add tests for it in a new test file src/__tests__/util.test.ts.\"
         delay 2
         key code 36 -- Press Enter to submit
     end tell")
 
-  (println "Prompt submitted to terminal. Waiting for CMD Lite to process the coding task...")
+  (println "Prompt submitted to chat webview. Waiting for CMD Lite to process the coding task...")
   (Thread/sleep 45000) ;; Wait 45 seconds for CMD Lite agent to complete execution and write files
 
   ;; Step 3: Capture visual verification screenshot

@@ -67,4 +67,10 @@ describe("UI Payload Tests", () => {
     expect(evt.method).toBe("webview/dispatchEvent");
     expect(evt.params.type).toBe("ResetSession");
   });
+
+  it("FocusInput event generation", () => {
+    const evt = makeUiEvent("FocusInput", {});
+    expect(evt.method).toBe("webview/dispatchEvent");
+    expect(evt.params.type).toBe("FocusInput");
+  });
 });

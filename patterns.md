@@ -275,6 +275,12 @@
 - **Context**: Visual and keyboard-interactive features in IDE extensions (like auto-scrolling and session refresh) are difficult to test with conventional headless unit/integration test suites.
 - **Solution**: Create a Babashka script that activates the target IDE via AppleScript (`tell application ... to activate`), simulates keypresses to focus views and trigger commands, types text prompts, waits for rendering/streaming, simulates scrolling keys, and takes phase-based screenshots using `screencapture` to verify states visually.
 
+---
+
+## Webview Programmatic Input Focus Pattern
+- **Context**: Automating visual tests or keyboard navigation inside custom webview sidebar views requires placing focus inside an iframe textarea, which traditionally fails using standard keyboard tab navigation or basic coordinate clicking.
+- **Solution**: Expose a custom VS Code command (e.g. `cmd-lite.focusChatInput`) that first focuses the webview panel using `executeCommand("viewId.focus")`, and then dispatches a custom JSON-RPC focus event (e.g., type `FocusInput`) to the webview context. The webview's message event listener intercepts this event and calls `textarea.focus()` programmatically, ensuring keystrokes immediately target the input area.
+
 
 
 
