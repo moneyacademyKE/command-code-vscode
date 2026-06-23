@@ -529,7 +529,7 @@
             {:id (:id task) :name (:name task) :status "FAILED"})))
       (do
         (println "❌ DeepSWE Task" (:id task) "FAILED (Timeout waiting for edits)")
-        {:id (:id task) :name (:name task) :status "TIMEOUT"})))
+        {:id (:id task) :name (:name task) :status "TIMEOUT"}))))
 
 ;; ==========================================
 ;; Orchestration and Entry Points
