@@ -281,6 +281,24 @@
 - **Context**: Automating visual tests or keyboard navigation inside custom webview sidebar views requires placing focus inside an iframe textarea, which traditionally fails using standard keyboard tab navigation or basic coordinate clicking.
 - **Solution**: Expose a custom VS Code command (e.g. `cmd-lite.focusChatInput`) that first focuses the webview panel using `executeCommand("viewId.focus")`, and then dispatches a custom JSON-RPC focus event (e.g., type `FocusInput`) to the webview context. The webview's message event listener intercepts this event and calls `textarea.focus()` programmatically, ensuring keystrokes immediately target the input area.
 
+---
+
+## Unicode-Aware Grapheme Truncation Pattern
+- **Context**: Standard string truncation using `.slice()` or `.substring()` operates on UTF-16 code units, which breaks multi-code-point unicode characters (like emojis with Zero-Width Joiners or accented characters), resulting in corrupted strings.
+- **Solution**: Use native `Intl.Segmenter` to split the string into grapheme clusters, check the length of the grapheme array against `maxLength`, slice the grapheme array, and join them back with the ellipsis. Throw an error if `maxLength` is negative.
+
+---
+
+## Multi-Monitor AppleScript Screen Capture Pattern
+- **Context**: Running `screencapture -x -o filename` in visual automation scripts on macOS defaults to capturing only the primary screen (coordinates 0,0). If the target IDE or application window is positioned on a secondary display (negative coordinates or offset coordinates), screen capture only records the primary screen (often showing desktop background or other applications like web browsers), failing to document the test.
+- **Solution**: Pass multiple output paths to `screencapture` (e.g. `screencapture -x -o screen1.png screen2.png`). Detect if a second screen file was generated, and if so, swap/move it to the primary screenshot destination. This ensures the correct screen (containing the target application) is visually verified.
+
+---
+
+## Dynamic Filesystem Polling Pattern
+- **Context**: AppleScript visual automation runs typically use hardcoded delays (such as `sleep 45000`) to wait for background execution or code generation to complete, which complects execution latency with automated test execution, leading to slow runs or early test cut-offs.
+- **Solution**: Implement an asynchronous/polling loop that repeatedly queries the filesystem for the presence and non-zero size of expected output files, continuing execution immediately on detection or timing out if a threshold is exceeded.
+
 
 
 

@@ -193,4 +193,22 @@ Keep the Webview completely stateless by using a CSS-driven panel system.
 - **Problem**: Navigating or scrolling nested elements causes the gesture or scroll boundary to propagate to the parent page, causing the main chat panel layout to shift or jump when boundaries are hit.
 - **Solution**: Style nested scrollable components (diff wrappers, tool execution outputs, logs) with CSS `overscroll-behavior: contain;`. This isolates the scroll boundaries strictly to the target viewport.
 
+---
+
+### Unicode-Aware Grapheme Truncation Pattern
+- **Problem**: Standard string truncation using `.slice()` or `.substring()` operates on UTF-16 code units, which breaks multi-code-point unicode characters (like emojis with Zero-Width Joiners or accented characters), resulting in corrupted strings.
+- **Solution**: Use native `Intl.Segmenter` to split the string into grapheme clusters, check the length of the grapheme array against `maxLength`, slice the grapheme array, and join them back with the ellipsis. Throw an error if `maxLength` is negative.
+
+---
+
+### Multi-Monitor AppleScript Screen Capture Pattern
+- **Problem**: Running `screencapture -x -o filename` in visual automation scripts on macOS defaults to capturing only the primary screen (coordinates 0,0). If the target IDE or application window is positioned on a secondary display (negative coordinates or offset coordinates), screen capture only records the primary screen (often showing desktop background or other applications like web browsers), failing to document the test.
+- **Solution**: Pass multiple output paths to `screencapture` (e.g. `screencapture -x -o screen1.png screen2.png`). Detect if a second screen file was generated, and if so, swap/move it to the primary screenshot destination. This ensures the correct screen (containing the target application) is visually verified.
+
+---
+
+### Dynamic Filesystem Polling Pattern
+- **Problem**: AppleScript visual automation runs typically use hardcoded delays (such as `sleep 45000`) to wait for background execution or code generation to complete, which complects execution latency with automated test execution, leading to slow runs or early test cut-offs.
+- **Solution**: Implement an asynchronous/polling loop that repeatedly queries the filesystem for the presence and non-zero size of expected output files, continuing execution immediately on detection or timing out if a threshold is exceeded.
+
 
