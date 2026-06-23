@@ -19,7 +19,17 @@ describe("truncateString", () => {
   });
 
   it("handles maxLength of 0", () => {
-    expect(truncateString("abc", 0)).toBe("...");
+    expect(truncateString("hello", 0)).toBe("...");
+  });
+
+  it("handles maxLength smaller than ellipsis length", () => {
+    expect(truncateString("hello", 1)).toBe("h...");
+    expect(truncateString("hello", 2)).toBe("he...");
+  });
+
+  it("handles very long strings", () => {
+    const long = "a".repeat(1000);
+    expect(truncateString(long, 500)).toBe("a".repeat(500) + "...");
   });
 
   it("throws for negative maxLength", () => {

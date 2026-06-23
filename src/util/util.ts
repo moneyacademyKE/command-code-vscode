@@ -2,13 +2,6 @@
  * Pure utility functions shared across both Node and browser environments.
  */
 
-export function truncateString(str: string, maxLength: number): string {
-  if (maxLength < 0) {
-    throw new Error("maxLength must be non-negative");
-  }
-  if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength) + "...";
-}
 
 export function escapeHtml(text: string): string {
   return text
@@ -17,6 +10,14 @@ export function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+export function truncateString(str: string, maxLength: number): string {
+  if (maxLength < 0) {
+    throw new Error("maxLength must be non-negative");
+  }
+  if (str.length <= maxLength) return str;
+  return str.slice(0, maxLength) + "...";
 }
 
 export function stripAnsi(input: string): string {

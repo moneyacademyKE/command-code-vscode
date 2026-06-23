@@ -181,6 +181,6 @@ To install and run this extension:
 - **Automated Visual UI Verification**: Visual state checks like auto-scrolling and session resets are highly timing-sensitive. Leveraging a Clojure/Babashka script to execute `osascript` AppleScript GUI automation (focusing views, triggering command palette commands, typing queries, and capturing phase-based screen captures) enables reliable, repeatable end-to-end user experience verification.
 - **Iframe Focus Handling for Webview Automation**: Standard OS-level keystroke scripts targeting webviews (like CMD Lite's custom Chat view) can fail to locate the target input area if multiple views of the same name (like native VS Code chat) are active, or if webview iframes capture focus ineffectively. Implementing a custom command `cmd-lite.focusChatInput` that calls the view's `.focus()` command and programmatically posts a `FocusInput` event to the webview textarea unentangles input targeting, guaranteeing reliable and repeatable keyboard-driven visual testing in webview panels.
 
-
-
-
+## Transient LLM Terminations & Test Location Compliance (v0.5.4)
+- **Transient LLM Connection Failures (Error: terminated)**: During autonomous agent execution, transient API drops or connection terminations on the model provider side (e.g. `commandcode.ai` rate limits or timeout terminations) manifest as `Error: terminated` in the client's stderr stream. These are network-level transient errors and can be safely retried directly in the workspace.
+- **Strict Style Guidelines Adaptation vs. User Prompt Location**: Code generation agents in structured IDE workspaces automatically adapt to existing repository file structure patterns (such as putting tests in `src/__tests__/`) over custom prompt paths (like `src/tests/`). When enforcing strict compliance with custom user prompt locations, it is crucial to review generated file locations and manually relocate tests (`src/tests/util.test.ts`) while keeping configurations updated.
