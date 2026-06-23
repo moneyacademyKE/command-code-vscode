@@ -50,6 +50,8 @@ import { restoreLastCheckpoint } from "./git/checkpoint";
 import { CmdMcpServer } from "./mcp/server";
 import { diffProposeTool } from "./mcp/tools/diff";
 import { terminalTool } from "./mcp/tools/terminal";
+import { diagnosticsTool } from "./mcp/tools/diagnostics";
+import { fileSearchTool } from "./mcp/tools/fileSearch";
 import { generateMcpConfig } from "./mcp/config";
 import { Logger } from "./logger";
 import { SessionManager } from "./sessionManager";
@@ -813,6 +815,8 @@ export function activate(context: vscode.ExtensionContext): void {
   session.mcpServer = new CmdMcpServer(mcpSocketPath, [
     terminalTool,
     diffProposeTool,
+    diagnosticsTool,
+    fileSearchTool,
   ]);
   session.mcpServer.start();
 
