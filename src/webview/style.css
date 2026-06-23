@@ -43,6 +43,14 @@ body {
   overflow: hidden;
 }
 
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 /* Add uppercase back to specific UI components */
 .header h2, .metrics, .action-btn, .panel-header, .panel-close, .message-role, .diff-btn, button, .agent-task,
 .footer-item, .context-section-title, .tool-call-header, .streaming-cursor::before {
