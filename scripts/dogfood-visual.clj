@@ -47,7 +47,7 @@
         delay 2 -- Wait for focus transition
         
         -- Type the coding prompt
-        keystroke \"In src/util/util.ts, add a utility function truncateString(str: string, maxLength: number): string that truncates a string and appends '...' if it exceeds maxLength. Add tests for it in a new test file src/__tests__/util.test.ts.\"
+        keystroke \"In src/util/util.ts, add a utility function truncateString(str: string, maxLength: number): string that truncates a string and appends '...' if it exceeds maxLength. Add tests for it in a new test file src/tests/util.test.ts.\"
         delay 2
         key code 36 -- Press Enter to submit
     end tell")
