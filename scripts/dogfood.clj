@@ -71,6 +71,31 @@
             (sh "mv" temp-filename-2 filename))))
       (println "Failed to save screenshot:" (:err res)))))
 
+(defn read-initial-contents [paths]
+  (into {}
+        (map (fn [path]
+               (let [f (fs/file path)]
+                 [path (if (fs/exists? f) (slurp f) nil)]))
+             paths)))
+
+(defn wait-for-task-edits [targets initial-contents max-seconds]
+  (println "Waiting for task edits on:" targets)
+  (loop [elapsed 0]
+    (let [done? (every? (fn [path]
+                          (let [f (fs/file path)]
+                            (and (fs/exists? f)
+                                 (> (fs/size f) 0)
+                                 (if-let [init-val (get initial-contents path)]
+                                   (not= (slurp f) init-val)
+                                   true))))
+                        targets)]
+      (cond
+        done? (do (println "Edits detected successfully after" elapsed "seconds!") true)
+        (>= elapsed max-seconds) (do (println "Timeout waiting for task edits.") false)
+        :else (do
+                (Thread/sleep 1000)
+                (recur (inc elapsed)))))))
+
 (defn wait-for-files [paths max-seconds]
   (println "Waiting for files:" paths)
   (loop [elapsed 0]
@@ -470,35 +495,41 @@
 
 (defn run-deepswe-task [task]
   (println (str "\n=== DeepSWE Task " (:id task) ": " (:name task) " (" (name (:level task)) ") ==="))
-  ;; Trigger task start command
+  ;; Trigger task start command with active IDE focus
   (run-applescript
-   "tell application \"System Events\"
+   "tell application \"Antigravity IDE\" to activate
+    tell application \"System Events\"
+        set frontmost of process \"Electron\" to true
+    end tell
+    delay 1.5
+    tell application \"System Events\"
+        -- Open command palette
         keystroke \"p\" using {command down, shift down}
-        delay 1
+        delay 1.5
+        -- Trigger session start command which stashes changes and reverts templates
         keystroke \"Command Code: Start Command Code Session\"
-        delay 1
+        delay 1.5
         key code 36 -- Press Enter
-        delay 4
+        delay 6
     end tell")
 
-  ;; Re-initialize sandbox directories and files immediately post-stash
-  (setup-sandbox)
-
-  (trigger-applescript-prompt (:prompt task))
-  (println "Prompt submitted. Waiting for task edits...")
-  (if (wait-for-files (:targets task) 90)
-    (do
-      (println "Target files edited. Running verifier...")
-      (if ((:verify task))
-        (do
-          (println "✅ DeepSWE Task" (:id task) "PASSED!")
-          {:id (:id task) :name (:name task) :status "PASSED"})
-        (do
-          (println "❌ DeepSWE Task" (:id task) "FAILED (Verification failed)")
-          {:id (:id task) :name (:name task) :status "FAILED"})))
-    (do
-      (println "❌ DeepSWE Task" (:id task) "FAILED (Timeout waiting for edits)")
-      {:id (:id task) :name (:name task) :status "TIMEOUT"})))
+  (let [targets (:targets task)
+        initial-contents (read-initial-contents targets)]
+    (trigger-applescript-prompt (:prompt task))
+    (println "Prompt submitted. Waiting for task edits...")
+    (if (wait-for-task-edits targets initial-contents 90)
+      (do
+        (println "Target files edited. Running verifier...")
+        (if ((:verify task))
+          (do
+            (println "✅ DeepSWE Task" (:id task) "PASSED!")
+            {:id (:id task) :name (:name task) :status "PASSED"})
+          (do
+            (println "❌ DeepSWE Task" (:id task) "FAILED (Verification failed)")
+            {:id (:id task) :name (:name task) :status "FAILED"})))
+      (do
+        (println "❌ DeepSWE Task" (:id task) "FAILED (Timeout waiting for edits)")
+        {:id (:id task) :name (:name task) :status "TIMEOUT"})))
 
 ;; ==========================================
 ;; Orchestration and Entry Points
