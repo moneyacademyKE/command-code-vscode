@@ -201,6 +201,6 @@
     end tell")
   (capture-screenshot "scripts/dogfood-visual-scroll-down.png")
 
-  (println "=== CMD Lite Visual UI Dogfooding Run Complete ===")))
+  (println "=== CMD Lite Visual UI Dogfooding Run Complete ==="))
 
 (run-dogfood)
