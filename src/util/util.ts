@@ -12,13 +12,6 @@ export function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
-export function truncateString(str: string, maxLength: number): string {
-  if (maxLength < 0) {
-    throw new Error("maxLength must be non-negative");
-  }
-  if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength) + "...";
-}
 
 export function stripAnsi(input: string): string {
   // eslint-disable-next-line no-control-regex
