@@ -239,7 +239,7 @@ export function extractTarball(tarballPath: string, targetDir: string): Promise<
 
 export function installDependencies(targetDir: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    exec("pnpm install --prod", {
+    exec("pnpm install --prod --ignore-scripts", {
       cwd: targetDir,
       timeout: 180000,
     }, (error, _stdout, stderr) => {
