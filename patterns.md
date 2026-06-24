@@ -306,7 +306,8 @@
 - **Solution**: Implement path sanitization as a pure, zero-dependency string function. Standardize all backslashes to forward slashes, collapse consecutive slashes using regular expressions, detect root markers (like `/` or Windows drive indicators `C:/` or `d:/`), and trim trailing slashes strictly for non-root paths.
 
 
+---
 
-
-
-
+## Unified Model Resolution & Propagation Pattern
+- **Context**: In multi-context editor extensions (involving a sidebar webview, background print tasks, and interactive terminal sessions), model configuration can become fragmented. If the model selector picker only updates the session state but is ignored when launching terminal commands, or if the UI displays a cached configuration rather than the active session model, the system operates with inconsistent models.
+- **Solution**: Establish a hierarchical model resolution priority: `Session State Picker > Process Environment Overrides > Workspace Configurations > CLI Defaults`. Hydrate the webview using the resolved state model, pass the updated `modelsLabel` in the payload of the `modelChanged` event so the header label refreshes immediately in response to picker selections, and forward both the model and permission mode flags directly as options to the interactive terminal launch routine.

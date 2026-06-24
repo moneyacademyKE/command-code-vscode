@@ -103,10 +103,17 @@ async function handleWebviewAction(
     case "pick-model": {
       const selected = await pickModel();
       if (selected) {
+        chatProvider.updateModelsLabel();
         chatProvider.dispatchEvent({
           jsonrpc: "2.0",
           method: "webview/dispatchEvent",
-          params: { type: "modelChanged", payload: { modelId: selected } }
+          params: {
+            type: "modelChanged",
+            payload: {
+              modelId: selected,
+              modelsLabel: chatProvider.getModelsLabel()
+            }
+          }
         });
       }
       break;
@@ -763,6 +770,30 @@ export function activate(context: vscode.ExtensionContext): void {
       if (e.affectsConfiguration("cmd-lite.showStatusBar")) {
         if (showStatusBarEnabled()) statusBar.show();
         else statusBar.hide();
+      }
+      if (e.affectsConfiguration("cmd-lite.defaultModel")) {
+        chatProvider.updateModelsLabel();
+        chatProvider.dispatchEvent({
+          jsonrpc: "2.0",
+          method: "webview/dispatchEvent",
+          params: {
+            type: "modelChanged",
+            payload: {
+              modelId: getEffectiveModel() ?? '',
+              modelsLabel: chatProvider.getModelsLabel()
+            }
+          }
+        });
+      }
+      if (e.affectsConfiguration("cmd-lite.defaultPermissionMode")) {
+        chatProvider.dispatchEvent({
+          jsonrpc: "2.0",
+          method: "webview/dispatchEvent",
+          params: {
+            type: "permChanged",
+            payload: { permissionMode: getEffectivePermissionMode() }
+          }
+        });
       }
     }),
   );

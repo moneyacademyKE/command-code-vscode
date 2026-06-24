@@ -508,10 +508,11 @@ function isNearBottom(el: HTMLElement, threshold = 150): boolean {
 }
 
 function scrollToBottom(el: HTMLElement): void {
-  el.scrollTop = el.scrollHeight;
-  // Double-scroll fallback using requestAnimationFrame to ensure layout reflow is complete
+  // Double-rAF: wait two animation frames so layout reflow is complete before scrolling
   requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
   });
 }
 
@@ -839,13 +840,12 @@ function renderDiffProposalHtml(id: string, diffText: string, response?: 'accept
   `;
 }
 
-function processMessageContentLight(raw: string): string {
-  // Fast streaming path: structural replacements only, no marked.parse()
-  // Used on every streaming chunk to avoid O(n²) re-parse
-  if (raw.startsWith('<img') || raw.startsWith('<div class="diff-widget"') || raw.startsWith('<div class="code-container"')) {
-    return raw;
-  }
-
+/**
+ * Shared structural replacements applied to both streaming (light) and final (full) rendering.
+ * Handles <thought>, <tool_call>, <result> tags and ```diff blocks.
+ * Returns the processed string; the caller decides whether to run marked.parse().
+ */
+function applyStructuralReplacements(raw: string): string {
   let processed = raw;
 
   processed = processed.replace(
@@ -894,62 +894,25 @@ function processMessageContentLight(raw: string): string {
   return processed;
 }
 
+function processMessageContentLight(raw: string): string {
+  // Fast streaming path: structural replacements only, no marked.parse()
+  // Used on every streaming chunk to avoid O(n²) re-parse
+  if (raw.startsWith('<img') || raw.startsWith('<div class="diff-widget"') || raw.startsWith('<div class="code-container"')) {
+    return raw;
+  }
+  return applyStructuralReplacements(raw);
+}
+
 function processMessageContent(raw: string): string {
   // Final message path: full render including marked.parse()
   if (raw.startsWith('<img') || raw.startsWith('<div class="diff-widget"') || raw.startsWith('<div class="code-container"')) {
     return raw;
   }
-
-  let processed = raw;
-
-  processed = processed.replace(
-    /<thought>([\s\S]*?)<\/thought>/gi,
-    (_m: string, inner: string) => {
-      const html = marked.parse(inner.trim()) as string;
-      return `<details class="step-accordion" open><summary>Thought ${streamingStartTime ? 'for ' + formatThoughtDuration(Date.now() - streamingStartTime) + ' ' : ''}[ctrl+o to expand]</summary><div class="thought-content">${html}</div></details>`;
-    },
-  );
-
-  processed = processed.replace(
-    /<tool_call>([\s\S]*?)<\/tool_call>/gi,
-    (_m: string, inner: string) => {
-      const nameMatch = inner.match(/name:\s*(\S+)/);
-      const toolName = nameMatch ? nameMatch[1] : 'unknown';
-      return `<div class="tool-call"><span class="tool-call-header">&#x1F527; TOOL CALL // ${escapeHtml(toolName)}</span><pre class="tool-call-body">${escapeHtml(inner)}</pre></div>`;
-    },
-  );
-
-  processed = processed.replace(
-    /<result>([\s\S]*?)<\/result>/gi,
-    (_m: string, inner: string) => {
-      return `<div class="tool-result"><span class="tool-call-header">&#x1F4CB; RESULT</span><pre class="tool-call-body">${escapeHtml(inner)}</pre></div>`;
-    },
-  );
-
-  processed = processed.replace(
-    /```diff\n([\s\S]*?)```/g,
-    (_m: string, inner: string) => {
-      const lines = inner.split('\n');
-      const formatted = lines
-        .map((line) => {
-          if (line.startsWith('+'))
-            return `<span class="diff-line add">${escapeHtml(line)}</span>`;
-          if (line.startsWith('-'))
-            return `<span class="diff-line sub">${escapeHtml(line)}</span>`;
-          if (line.startsWith('@@'))
-            return `<span class="diff-line hunks">${escapeHtml(line)}</span>`;
-          return escapeHtml(line);
-        })
-        .join('\n');
-      return `<pre class="diff-block">${formatted}</pre>`;
-    },
-  );
-
+  const processed = applyStructuralReplacements(raw);
   // Only do full marked.parse() at completion — never during streaming
   if (processed === raw) {
-    processed = marked.parse(raw) as string;
+    return marked.parse(raw) as string;
   }
-
   return processed;
 }
 
@@ -2188,6 +2151,9 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'modelChanged':
       case 'ModelChanged': {
         state.modelId = payload.modelId;
+        if (payload.modelsLabel) {
+          state.modelsLabel = payload.modelsLabel;
+        }
         saveState();
         updateHeader();
         updateFooter();

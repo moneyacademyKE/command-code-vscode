@@ -112,5 +112,7 @@ We evaluated adding SolidJS and Partytown to the VS Code Webview to handle UI re
 - **Zero-Dependency Portability**: Implementing path normalization logic using pure string replacement and regular expressions instead of Node's native `path` module keeps utilities completely portable, enabling them to execute seamlessly in both Node.js and sandboxed browser/webview environments.
 - **Root-Preservation Logic**: Trimming trailing slashes blindly can corrupt paths that represent directory roots (e.g. `/` or Windows drive paths like `C:/`). Using targeted checks (`sanitized === "/"` and `/^[a-zA-Z]:\/$/`) prior to trimming guarantees root boundary preservation.
 - **Windows and POSIX Standardization**: Converting all backslashes (`\`) to forward slashes (`/`) standardizes path formats early, making duplicate separator collapsing (`/\/+/g`) straightforward and reliable.
-
-
+### 24. Unified Model Selector Workflow & Dynamic Environment Fallback (v0.6.1)
+- **Hierarchical Model Resolution**: Establishing a resolution priority of `Session Picker State > Environment Variable Override > Workspace Configuration > CLI Defaults` ensures consistent model usage across headless runPrint, interactive terminal sessions, and the sidebar webview UI.
+- **Dynamic UI Label Updates**: Webviews that display configuration metadata (like the `# models: ...` header label) can become stale if they only read from configuration files. Dispatching updated modelsLabel strings to the webview as part of the `modelChanged` event payload resolves this latency, rendering dynamic model name switches immediately.
+- **Interactive Terminal Session Context Propagation**: Spawning interactive terminal sessions (`cmd-lite.start`) without forwarding the model parameter forces the terminal shell to fallback to native defaults. Passing the resolved model and permissionMode variables inside `StartSessionOptions` ensures terminal launches honor user preferences and environment overrides.

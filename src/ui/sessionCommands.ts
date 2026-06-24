@@ -8,13 +8,14 @@ import {
   updateCli,
   whoami,
 } from "../cli/commands";
-import { getActiveCwd } from "../config";
+import { getActiveCwd, getEffectiveModel, getEffectivePermissionMode } from "../config";
 import { resolveCliPath, installOrUpdateLocalCli } from "../cli/resolve";
 import { startInteractiveSession } from "../permission/interactive";
 import type { StatusBar } from "./statusBar";
 import { type SessionTreeProvider, type SessionTreeItem, getJsonlPathForSession } from "./sessionView";
 import type { ChatViewProvider } from "../webview/ChatViewProvider";
 import { SessionManager } from "../sessionManager";
+import { readSessionState } from "../cli/store";
 
 const session = SessionManager.getInstance();
 
@@ -40,12 +41,25 @@ export function registerSessionCommands(
           payload: {}
         }
       });
-      startInteractiveSession(extUri, { cwd, trust: true });
+      const state = readSessionState();
+      startInteractiveSession(extUri, {
+        cwd,
+        trust: true,
+        model: state.model ?? getEffectiveModel(),
+        permissionMode: state.permissionMode ?? getEffectivePermissionMode(),
+      });
     }),
 
     vscode.commands.registerCommand("cmd-lite.continue", () => {
       const cwd = getActiveCwd();
-      startInteractiveSession(extUri, { cwd, continueLast: true, trust: true });
+      const state = readSessionState();
+      startInteractiveSession(extUri, {
+        cwd,
+        continueLast: true,
+        trust: true,
+        model: state.model ?? getEffectiveModel(),
+        permissionMode: state.permissionMode ?? getEffectivePermissionMode(),
+      });
     }),
 
     vscode.commands.registerCommand("cmd-lite.resume", async (sessionId?: string) => {
@@ -90,10 +104,13 @@ export function registerSessionCommands(
           }
         }
         
+        const state = readSessionState();
         startInteractiveSession(extUri, {
           cwd,
           resume: cleanId || undefined,
           trust: true,
+          model: state.model ?? getEffectiveModel(),
+          permissionMode: state.permissionMode ?? getEffectivePermissionMode(),
         });
       }
     }),

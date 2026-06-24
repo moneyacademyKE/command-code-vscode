@@ -3,6 +3,7 @@ import { getEffectiveModel, getEffectivePermissionMode, getActiveCwd } from '../
 import { resolveCliPath, checkCliVersion } from '../cli/resolve';
 import type { EditorContext } from '../context/protocol';
 import { Logger } from '../logger';
+import { readSessionState } from '../cli/store';
 
 import { SessionManager } from '../sessionManager';
 
@@ -33,27 +34,33 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
   private _view?: vscode.WebviewView;
   private _cliVersion = '';
-  private _modelsLabel = '';
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _onEvent?: (eventName: string, data: unknown) => void
   ) {}
 
+  public getModelsLabel(): string {
+    return this._buildModelsLabel();
+  }
+
+  public updateModelsLabel(): void {
+    // Dynamic resolution via readSessionState, no caching needed
+  }
+
   private async _fetchCliInfo() {
     try {
       const cliPath = resolveCliPath();
       const versionResult = await checkCliVersion(cliPath);
       this._cliVersion = versionResult.version || '';
-      this._modelsLabel = this._buildModelsLabel();
     } catch {
       this._cliVersion = '';
-      this._modelsLabel = '';
     }
   }
 
   private _buildModelsLabel(): string {
-    const model = getEffectiveModel();
+    const state = readSessionState();
+    const model = state.model ?? getEffectiveModel();
     const parts: string[] = [];
     if (model) {
       const short = model.split('/').pop() || model;
@@ -89,38 +96,40 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     });
 
     // Send initial state to hydrate the webview
+    const initPersistedState = readSessionState();
     this.dispatchEvent({
       jsonrpc: "2.0",
       method: "webview/dispatchEvent",
       params: {
         type: "initState",
         payload: {
-          modelId: getEffectiveModel() ?? '',
-          permissionMode: getEffectivePermissionMode(),
+          modelId: initPersistedState.model ?? getEffectiveModel() ?? '',
+          permissionMode: initPersistedState.permissionMode ?? getEffectivePermissionMode(),
           tokens: { prompt: 0, completion: 0, total: 0 },
           sessionId: session.currentSessionId ?? '',
           turnCount: session.turnCount,
           cliVersion: this._cliVersion,
-          modelsLabel: this._modelsLabel,
+          modelsLabel: this._buildModelsLabel(),
         }
       }
     });
 
     // Fetch CLI version asynchronously and push when ready
     this._fetchCliInfo().then(() => {
+      const postPersistedState = readSessionState();
       this.dispatchEvent({
         jsonrpc: "2.0",
         method: "webview/dispatchEvent",
         params: {
           type: "initState",
           payload: {
-            modelId: getEffectiveModel() ?? '',
-            permissionMode: getEffectivePermissionMode(),
+            modelId: postPersistedState.model ?? getEffectiveModel() ?? '',
+            permissionMode: postPersistedState.permissionMode ?? getEffectivePermissionMode(),
             tokens: { prompt: 0, completion: 0, total: 0 },
             sessionId: session.currentSessionId ?? '',
             turnCount: session.turnCount,
             cliVersion: this._cliVersion,
-            modelsLabel: this._modelsLabel,
+            modelsLabel: this._buildModelsLabel(),
           }
         }
       });

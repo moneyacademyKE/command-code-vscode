@@ -6,7 +6,9 @@ export function getEffectiveModel(): string | undefined {
     .getConfiguration("cmd-lite")
     .get<string>("defaultModel", "")
     .trim();
-  return value || undefined;
+  if (value) return value;
+  const envModel = process.env.ANTIGRAVITY_MODEL || process.env.MODEL;
+  return envModel?.trim() || undefined;
 }
 
 export function getEffectivePermissionMode(): PermissionMode {
