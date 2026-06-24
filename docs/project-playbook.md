@@ -103,7 +103,11 @@ We enforce standard workspace scripts using **Babashka (clojure script)** rather
 
 ### 2. Git Hooks Configuration
 *   **Path**: [scripts/install-hooks.clj](file:///Users/moe/Desktop/cmd/scripts/install-hooks.clj)
-*   **Rules**: Pre-commit hooks run automated unit testing, formatting check, and typescript compilation verification before allowing commits.
+*   **Rules**: Pre-commit hooks run automated unit testing, formatting check, and typescript compilation verification using `pnpm` before allowing commits.
+
+### 3. Pre-flight Publishing Verification
+*   **Path**: [scripts/publish.clj](file:///Users/moe/Desktop/cmd/scripts/publish.clj)
+*   **Rules**: Validates that the git tree is clean, builds the codebase, runs linter and unit tests, compiles the package, and optionally publishes the same single VSIX package to both VS Code Marketplace and Open VSX Registry, preventing duplicate build variance.
 
 ---
 
@@ -119,7 +123,14 @@ We enforce standard workspace scripts using **Babashka (clojure script)** rather
     pnpm typecheck
     ```
 
-### 2. Manual Visual Tests
+### 2. CI/CD Pipeline Verification & Gotchas
+*   **Package Manager Compliance**: All pipelines must run strictly through `pnpm` (never `npm` or `yarn`).
+*   **Node.js Engine Support**: Running pnpm version 11 in CI/CD requires Node.js `22.x` or higher (due to dependencies on native `node:sqlite`). Using older Node runtimes triggers execution crashes.
+*   **Preinstall Check Hook dependencies**: Because package installation runs validation scripts utilizing Babashka, CI runners must install the Babashka toolchain before calling `pnpm install`.
+*   **Build Order Alignment**: Automated tests (such as webview regression tests) assert assets generated in compilation (e.g. `dist/webview/style.css`). Always execute `pnpm run build` prior to running the test suite in CI to prevent `ENOENT` crashes.
+
+### 3. Manual Visual Tests
 *   Verify focus behaviors: Arrow keys and PageUp/PageDown must scroll the chat window when focused inside inputs and on background panel zones.
 *   Verify theme colors: Contrast must adapt dynamically when changing workbench themes.
 *   Verify nested scrollbars: Confirm nested scrollbars do not pass scroll events to the outer parent layout when boundary is reached.
+
