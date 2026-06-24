@@ -36,7 +36,7 @@ describe("config getEffectiveModel tests", () => {
     expect(getEffectiveModel()).toBe("claude-opus-4.8");
   });
 
-  it("should return ANTIGRAVITY_MODEL if configuration is empty", () => {
+  it("should return undefined if configuration is empty", () => {
     vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
       get: vi.fn((key, defaultValue) => {
         if (key === "defaultModel") return "";
@@ -46,10 +46,10 @@ describe("config getEffectiveModel tests", () => {
 
     process.env.ANTIGRAVITY_MODEL = "gemini-2.5-flash";
 
-    expect(getEffectiveModel()).toBe("gemini-2.5-flash");
+    expect(getEffectiveModel()).toBeUndefined();
   });
 
-  it("should return MODEL environment variable if ANTIGRAVITY_MODEL and config are empty", () => {
+  it("should return undefined if configuration contains spaces only", () => {
     vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
       get: vi.fn((key, defaultValue) => {
         if (key === "defaultModel") return "   ";
@@ -57,22 +57,7 @@ describe("config getEffectiveModel tests", () => {
       }),
     } as unknown as vscode.WorkspaceConfiguration);
 
-    delete process.env.ANTIGRAVITY_MODEL;
     process.env.MODEL = "deepseek-chat";
-
-    expect(getEffectiveModel()).toBe("deepseek-chat");
-  });
-
-  it("should return undefined if all sources are empty or unset", () => {
-    vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
-      get: vi.fn((key, defaultValue) => {
-        if (key === "defaultModel") return "";
-        return defaultValue;
-      }),
-    } as unknown as vscode.WorkspaceConfiguration);
-
-    delete process.env.ANTIGRAVITY_MODEL;
-    delete process.env.MODEL;
 
     expect(getEffectiveModel()).toBeUndefined();
   });
